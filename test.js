@@ -1,9 +1,10 @@
 let keys, ball, fix;
 const dim = 800;
-const r = 1000; //  Station radius in meters
-const rr = -0.01; // rotation rate in radians per second
+const r = 2500; //  Station radius in meters
+const rr = -0.02; // rotation rate in radians per second
 const MAX_SPEED = 10;
 const FRICTION = 0.5;
+const JUMP = 20;
 
 function setup(){
 	createCanvas(dim, dim);
@@ -41,7 +42,7 @@ class Player{
 		var rv = rr*this.p.mag(); // the speed of the ground
 		if(this.l){
 			if(keys[UP_ARROW]){
-				this.v.add(p5.Vector.mult(this.p, -5/this.p.mag()));
+				this.v.add(p5.Vector.mult(this.p, -1*JUMP/this.p.mag()));
 				this.l = false;
 			}
 			if(keys[RIGHT_ARROW] && this.vt > rv-MAX_SPEED){
