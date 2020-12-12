@@ -2,6 +2,8 @@ let keys, ball, fix;
 const dim = 800;
 const r = 1000; //  Station radius in meters
 const rr = -0.01; // rotation rate in radians per second
+const MAX_SPEED = 10;
+const FRICTION = 0.5;
 
 function setup(){
 	createCanvas(dim, dim);
@@ -31,7 +33,7 @@ class Player{
 		this.v = createVector(rr, 0);
 		this.p.rotate(angle);
 		this.v.rotate(angle);
-		this.vt = 0; // Velocity tangential, used when landed
+		this.vt = rr*this.p.mag(); // Velocity tangential, used when landed
 		this.l = false;
 	}
 
@@ -42,32 +44,31 @@ class Player{
 				this.v.add(p5.Vector.mult(this.p, -5/this.p.mag()));
 				this.l = false;
 			}
-			if(keys[RIGHT_ARROW] && this.vt > rv-10){
-				this.vt = max(rv-2, this.vt-1);
+			if(keys[RIGHT_ARROW] && this.vt > rv-MAX_SPEED){
+				this.vt = max(rv-MAX_SPEED, this.vt-FRICTION*2);
 			}
-			if(keys[LEFT_ARROW] && this.vt < rv+10){
-				this.vt = min(rv+2, this.vt+1);
+			if(keys[LEFT_ARROW] && this.vt < rv+MAX_SPEED){
+				this.vt = min(rv+MAX_SPEED, this.vt+FRICTION*2);
 			}
 		}
 	}
 
 	update(){
-		var rv = rr*this.p.mag(); // the speed of the ground
+		var rv = rr*(this.p.mag()); // the speed of the ground
 		if(this.u){
 			this.move();
 		}
 		if(this.l) {
 			// friction: tries to match ground velocity
 			if(this.vt < rv){
-				this.vt = min(rv, this.vt+0.2);
+				this.vt = min(rv, this.vt+FRICTION);
 			}
 			if(this.vt > rv){
-				this.vt = max(rv, this.vt-0.2);
+				this.vt = max(rv, this.vt-FRICTION);
 			}
 			this.v.rotate(this.p.heading()+Math.PI/2-this.v.heading());
 			this.v.setMag(this.vt); // Can this be negative? Does it work then?
 			this.p.rotate(this.vt/this.p.mag())
-			console.log(this.vt);
 		}
 		else {
 			this.p.add(this.v);
