@@ -1,17 +1,16 @@
 let keys, ball, fix;
 const dim = 800;
-const r = 1000;
-const rr = 10; // rotation rate
+const r = 1000; //  Station radius in meters
+const rr = -0.01; // rotation rate in radians per second
 
 function setup(){
 	createCanvas(dim, dim);
 	smooth();
-	angleMode("degrees");
 	keys = [];
 	fix = [];
 	ball = new Player(1, 40, color(50, 150, 250));
 	for(let i = 0; i < 30; i ++){
-		fix[i] = new Player(0, 20, color(255, 0, 0), i*12);
+		fix[i] = new Player(0, 20, color(255, 0, 0), i*Math.PI/6);
 	}
 }
 
@@ -32,39 +31,51 @@ class Player{
 		this.v = createVector(rr, 0);
 		this.p.rotate(angle);
 		this.v.rotate(angle);
+		this.vt = 0; // Velocity tangential, used when landed
+		this.l = false;
 	}
 
 	move(){
-		if(this.p.mag()  >= r-this.s/2){
+		var rv = rr*this.p.mag(); // the speed of the ground
+		if(this.l){
 			if(keys[UP_ARROW]){
-				this.v.add(p5.Vector.mult(this.p, -0.01));
+				this.v.add(p5.Vector.mult(this.p, -5/this.p.mag()));
+				this.l = false;
 			}
-			if(keys[LEFT_ARROW] && this.v.mag() > 0.1){
-				this.v.setMag(max(0.1, this.v.mag()-1));
+			if(keys[RIGHT_ARROW] && this.vt > rv-10){
+				this.vt = max(rv-2, this.vt-1);
 			}
-			if(keys[RIGHT_ARROW] && this.v.mag() < 2*rr){
-				this.v.setMag(min(2*rr, this.v.mag()+1));
+			if(keys[LEFT_ARROW] && this.vt < rv+10){
+				this.vt = min(rv+2, this.vt+1);
 			}
 		}
 	}
 
 	update(){
+		var rv = rr*this.p.mag(); // the speed of the ground
 		if(this.u){
 			this.move();
 		}
-		this.p.add(this.v);
-		if(this.p.mag() >= r-this.s/2){
-			// don't leave the spaceship!
-			this.p.setMag(r-this.s/2);
-			this.v.rotate(this.p.heading()-90-this.v.heading());
-			// friction
-			if(this.v.mag() <= rr){
-				this.v.setMag(this.v.mag() + 0.2);
+		if(this.l) {
+			// friction: tries to match ground velocity
+			if(this.vt < rv){
+				this.vt = min(rv, this.vt+0.2);
 			}
-			if(this.v.mag() >= rr){
-				this.v.setMag(max(rr, this.v.mag() - 0.2));
+			if(this.vt > rv){
+				this.vt = max(rv, this.vt-0.2);
 			}
-			this.v.limit(3*rr);
+			this.v.rotate(this.p.heading()+Math.PI/2-this.v.heading());
+			this.v.setMag(this.vt); // Can this be negative? Does it work then?
+			this.p.rotate(this.vt/this.p.mag())
+			console.log(this.vt);
+		}
+		else {
+			this.p.add(this.v);
+			if(this.p.mag() >= r-this.s/2){
+				// don't leave the spaceship!
+				this.l = true;
+				this.p.setMag(r-this.s/2);
+			}
 		}
 	}
 
@@ -81,7 +92,7 @@ function draw(){
 	ball.update();
 	for(let i = 0; i < 30; i ++){fix[i].update();}
 	translate(dim/2,dim/2);
-	rotate(-ball.p.heading()+90);
+	rotate(-ball.p.heading()+Math.PI/2);
 	translate(-ball.p.x,-ball.p.y);
 	noFill();
 	stroke(0);
