@@ -177,7 +177,7 @@ function readLevel(f){
 	ball = new Player(40, color(50, 150, 250));
 	entities = [ball];
 	for(let i = 0; i < 12; i ++){
-		ball.push(new Marker(20, color(255, 0, 0), i*PI/6+PI/12));
+		entities.push(new Marker(20, color(255, 0, 0), i*PI/6+PI/12));
 	}
 	rot = ball.p.heading();
 	drot = 0;
