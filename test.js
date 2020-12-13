@@ -1,4 +1,6 @@
-let keys, ball, fix, platforms;
+let keys, ball, fix, platforms, features, goal;
+let tCollected = 0;
+let tGoal = 1;
 let rot, drot;
 let dim = 800;
 let file;
@@ -15,8 +17,9 @@ function setup(){
 	smooth();
 	keys = [];
 	fix = [];
+	goal = new Goal(false, true, 150);
+	features = [goal, new Key(300, PI, 50)];
 	ball = new Player(40, color(50, 150, 250));
-	goal = new Goal(true, true, 150);
 	for(let i = 0; i < 30; i ++){
 		fix[i] = new Marker(20, color(255, 0, 0), i*PI/6);
 	}
@@ -30,47 +33,6 @@ function keyPressed(){
 
 function keyReleased(){
 	keys[keyCode] = false;
-}
-
-class Goal{
-	constructor(active, assembled, r){
-		this.active = active;
-		this.assembled = assembled;
-		this.r=r;
-		this.t = 0;
-		this.particles_r = [];
-		this.particles_a = [];
-		for(let i = 0; i<300; i++){
-			this.particles_r.push(Math.random());
-			this.particles_a.push(Math.random()*TWO_PI);
-		}
-	}
-
-	draw(){
-		fill(color(50));
-		stroke(color(0,0,0));
-		if(this.assembled) {
-			strokeWeight(10);
-			ellipse(0,0,this.r*2+20,this.r*2+20);
-			if(this.active) {
-				// strokeWeight(1);
-				// noFill();
-				// stroke(color(0,155,255));
-				// ellipse(0,0,this.r*2+20,this.r*2+20);
-				strokeWeight(10);
-				stroke(color(0,0,255));
-				fill(color(0,155,255))
-				ellipse(0,0,this.r*2,this.r*2);
-				noFill();
-				for(let i = 0; i<this.particles_a.length; i++) {
-					let r = this.r-(this.r*this.particles_r[i]+frameCount*1)%this.r;
-					let a = (this.particles_a[i]+frameCount*0.03)%TWO_PI;
-					strokeWeight(5*sqrt(r/this.r));
-					point(r*Math.cos(a), r*Math.sin(a));
-				}
-			}
-		}
-	}
 }
 
 class Platform{
@@ -90,12 +52,123 @@ class Platform{
 	}
 }
 
+class StaticFeature {
+	constructor(radius,a,s) {
+		this.p = createVector(0, radius);
+		this.p.rotate(a);
+		this.s = s;
+	}
+
+	checkCollision(that){
+		if(this.p.dist(that.p) <= this.s){
+			this.collide(that);
+		}
+	}
+
+	update(){
+		this.p.rotate(rr);
+	}
+
+	collide(entity){}
+
+	draw(){}
+}
+
+class Goal extends StaticFeature{
+	constructor(active, assembled, s){
+		super(0,0,s);
+		this.active = active;
+		this.assembled = assembled;
+		this.t = 0;
+		this.particles_r = [];
+		this.particles_a = [];
+		for(let i = 0; i<300; i++){
+			this.particles_r.push(Math.random());
+			this.particles_a.push(Math.random()*TWO_PI);
+		}
+	}
+
+	checkCollision(that){
+		if(that instanceof Player) {
+			super.checkCollision(that);
+		}
+	}
+
+	collide(entity){
+		if(this.active && this.assembled) {
+			console.log("WIN!");
+		}
+	}
+
+	draw(){
+		fill(color(50));
+		stroke(color(0,0,0));
+		if(this.assembled) {
+			strokeWeight(10);
+			ellipse(this.p.x,this.p.y,this.s*2+20,this.s*2+20);
+			if(this.active) {
+				// strokeWeight(1);
+				// noFill();
+				// stroke(color(0,155,255));
+				// ellipse(0,0,this.r*2+20,this.r*2+20);
+				strokeWeight(10);
+				stroke(color(0,0,255));
+				fill(color(0,155,255))
+				ellipse(this.p.x,this.p.y,this.s*2,this.s*2);
+				noFill();
+				for(let i = 0; i<this.particles_a.length; i++) {
+					let r = this.s-(this.s*this.particles_r[i]+frameCount*1)%this.s;
+					let a = (this.particles_a[i]+frameCount*0.03)%TWO_PI;
+					strokeWeight(5*sqrt(r/this.s));
+					point(r*Math.cos(a), r*Math.sin(a));
+				}
+			}
+		}
+	}
+}
+
+class Key extends StaticFeature {
+	constructor(radius,a,s){
+		super(radius,a,s);
+		this.collected = false;
+	}
+
+	checkCollision(that){
+		if(that instanceof Player) {
+			super.checkCollision(that);
+		}
+	}
+
+	collide(entity){
+		if(!this.collected) {
+			this.collected = true;
+			tCollected += 1;
+			if(tCollected >= tGoal){
+				goal.active = true;
+			}
+		}
+	}
+
+	draw(){
+		if(this.collected){
+			noFill();
+			stroke(color(0,0,255));
+			strokeWeight(3);
+		}
+		else{
+			noStroke();
+			fill(color(100,255,255));
+		}
+		ellipse(this.p.x,this.p.y,this.s*2,this.s*2);
+	}
+}
+
 // is angle a between b->c
 function angleCheck(a, b, c){
   if(b+TWO_PI == c) return true;
-  a = (a%TWO_PI+TWO_PI)%TWO_PI
-  b = (b%TWO_PI+TWO_PI)%TWO_PI
-  c = (c%TWO_PI+TWO_PI)%TWO_PI
+  a = (a%TWO_PI+TWO_PI)%TWO_PI;
+  b = (b%TWO_PI+TWO_PI)%TWO_PI;
+  c = (c%TWO_PI+TWO_PI)%TWO_PI;
   return (b <= c ? b <= a && a <= c : b <= a || a <= c);
 }
 
@@ -143,6 +216,9 @@ class Entity{
 				this.onFall();
 			}
 		}
+		for(let i = 0; i<features.length; i++){
+			features[i].checkCollision(this);
+		}
 	}
 
 	onPlatform() {}
@@ -172,13 +248,11 @@ class SolidEntity extends Entity{
 		}
 		this.p.rotate(this.vt/this.p.mag())
 		this.v.rotate(this.p.heading()+HALF_PI-this.v.heading());
-		console.log(this.v);
 		this.v.setMag(this.vt);
 	}
 
 	onCollide(collision) {
 		// don't leave the spaceship!
-		console.log(platforms[collision].friction);
 		this.l = collision;
 		this.p.setMag(platforms[collision].r-this.s/2);
 		this.vt = -1*Math.sin(this.v.angleBetween(this.p))*this.v.mag();
@@ -252,7 +326,7 @@ function readLevel(f){
 		platforms.push(new Platform(int(t[0]), float(t[1]), float(t[2])));
 	}
 	platforms.push(new Platform(r, 0, TWO_PI));
-	// keys
+	// tokens
 	n = int(f[fi++]);
 	while(n--){
 		t = splitTokens(f[fi++]);
@@ -270,10 +344,13 @@ function readLevel(f){
 	}
 }
 
+function updateLevel(){
+  	ball.update();
+  	for(let i = 0; i < 30; i ++){fix[i].update();}
+	for(let i=0; i<features.length; i++){features[i].update();}
+}
+
 function drawLevel(){
-  // spaceship
-	ball.update();
-	for(let i = 0; i < 30; i ++){fix[i].update();}
 	translate(dim/2,dim/2);
 	// rotate(-ball.p.heading()+HALF_PI);
 	// scale(0.5,0.5);
@@ -285,11 +362,11 @@ function drawLevel(){
 	rotate(-rot+HALF_PI);
 	scale(0.3,0.3);
 	// translate(-ball.p.x,-ball.p.y);
-	goal.draw();
 	ball.draw();
 	for(let i = 0; i < 30; i ++){fix[i].draw();}
 	for(let i=0; i<platforms.length; i++){platforms[i].draw();}
-  // smooth rotation
+	for(let i=0; i<features.length; i++){features[i].draw();}
+  	// smooth rotation
 	rot = (rot+TWO_PI)%TWO_PI;
 	let targ = (ball.p.heading()+TWO_PI)%TWO_PI;
 	let mv = targ-TWO_PI;
@@ -308,6 +385,6 @@ function drawLevel(){
 
 function draw(){
 	background(250);
-  drawLevel();
-  // console.log(mv, drot);
+	updateLevel();
+	drawLevel();
 }
