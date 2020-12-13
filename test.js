@@ -16,9 +16,9 @@ let stars;
 let lnum = 1;
 let lvlfiles = [];
 let lvlb = [];
-const levels = ["Level 1", "Level 2"];
+const levels = ["Level 1", "Level 2", "Level 3", "Level 4"];
 
-let hbut, abut;
+let hbut, abut, ibut;
 let donea = 0;
 let trana = 0;
 
@@ -45,7 +45,8 @@ function setup(){
 			lvlb[j] = new LevelButton(j, dim/2 + (j-w/2+0.5)*150, dim/2 - 50 + i*150)
 		}
 	}
-	hbut = new LevelButton(0, dim/2 - 75, dim/2 + 100, "Home", "Home");
+	ibut = new LevelButton(0, dim-100, dim-100, "?", "About");
+	hbut = new LevelButton(0, 100, dim-100, "Home", "Home");
 	rot = 0;
 }
 
@@ -98,6 +99,7 @@ class LevelButton {
 			this.a = 100;
 			if(clicked){
 				if(this.dir == ""){
+					gameticks = 0;
 					lnum = this.n;
 					readLevel(lvlfiles[lnum]);
 					tpage = "Game";
@@ -229,6 +231,7 @@ function drawHome(){
 	for(let i = 0; i < levels.length; i ++){
 		lvlb[i].draw();
 	}
+	ibut.draw();
 	// background rotation
 	rot += 0.001;
 }
@@ -348,6 +351,22 @@ function drawFail(){
 	donea += (200-donea)/10;
 }
 
+function drawAbout(){
+	fill(255);
+	noStroke();
+	textAlign(CENTER, CENTER);
+	textFont('Courier New', 60);
+	text("About", dim/2, dim/4);
+	textSize(20);
+	textAlign(LEFT, TOP);
+	text("This is a platformer game with a twist: there's no gravity. Instead, you're on a circular map that spins, generating rotational gravity. You'll find that you move differently, and we encourage you to explore the mechanics of jumping.\n\nPS: arrow keys to move.", 100, dim/3, dim-200, dim);
+	hbut.x = 100;
+	hbut.y = dim-100;
+	hbut.draw();
+	// background rotation
+	rot += 0.001;
+}
+
 function draw(){
 	background(0);
 	// stars
@@ -362,7 +381,6 @@ function draw(){
 	pop();
 	if(page === "Home"){
 		drawHome();
-		gameticks = 0;
 	}
 	if(page === "Game"){
 		drawLevel();
@@ -374,12 +392,18 @@ function draw(){
 	if(page === "Lose"){
 		drawFail();
 	}
+	if(page === "About"){
+		drawAbout();
+	}
 	// general scene-change animation, except for 'Done'
 	if(page != tpage){
 		trana += (255-trana)/5;
 		if(trana >= 250){
 			page = tpage;
-			rot = ball.p.heading();
+			// align camera to player
+			if(tpage === "Game"){
+				rot = ball.p.heading();
+			}
 		}
 	}else{
 		trana -= trana / 5;
