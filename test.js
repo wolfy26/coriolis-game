@@ -1,11 +1,8 @@
 let keys, ball, fix, platforms;
 let rot, drot;
-const dim = 800;
-const r = 1000; //  Station radius in pixels
-const rr = -0.02; // rotation rate in radians per frame
-const MAX_SPEED = 10;
+let dim = 800;
+let r, rr, MAX_SPEED, JUMP;
 const FRICTION = 0.5;
-const JUMP = 10;
 
 function preload(){
 	loadLevel("Intro");
@@ -16,13 +13,6 @@ function setup(){
 	smooth();
 	keys = [];
 	fix = [];
-	platforms = [
-		new Platform(r-800, -2.75, -1.75),
-    new Platform(r-600, -1.75, -0.75),
-		new Platform(r-400, -0.75, 0.25),
-		new Platform(r-200, 0.25, 1.25),
-		new Platform(r, 0, TWO_PI)
-	];
 	ball = new Player(1, 40, color(50, 150, 250));
 	for(let i = 0; i < 30; i ++){
 		fix[i] = new Player(0, 20, color(255, 0, 0), i*PI/6);
@@ -156,6 +146,33 @@ class Player{
 
 function loadLevel(filename){
 	f = loadStrings('../levels/' + filename + '.lvl');
+	let fi = 0, n;
+	let t = splitTokens(f[fi++]);
+	r = int(t[0]), rr = float(t[1]), MAX_SPEED = float(t[2]), JUMP = float(t[3]);
+	// platforms
+	n = int(f[fi++]);
+	platforms = [];
+	while(n--){
+		t = splitTokens(f[fi++]);
+		platforms.push(new Platform(int(t[0]), float(t[1]), float(t[2])));
+	}
+	platforms.push(new Platform(r, 0, TWO_PI));
+	// keys
+	n = int(f[fi++]);
+	while(n--){
+		t = splitTokens(f[fi++]);
+	}
+	// spikes
+	n = int(f[fi++]);
+	while(n--){
+		t = splitTokens(f[fi++]);
+	}
+	// enemies
+
+	n = int(f[fi++]);
+	while(n--){
+		t = splitTokens(f[fi++]);
+	}
 }
 
 function drawLevel(){
