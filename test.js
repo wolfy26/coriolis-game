@@ -155,7 +155,7 @@ class Player{
 }
 
 function loadLevel(filename){
-	f = loadStrings('https:levels/' + filename + '.lvl');
+	f = loadStrings('../levels/' + filename + '.lvl');
 }
 
 function drawLevel(){
