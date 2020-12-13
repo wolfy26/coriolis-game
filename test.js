@@ -1,4 +1,4 @@
-let keys, ball, fix, platforms;
+let keys, ball, fix, platforms, goal;
 const dim = 800;
 const r = 1000; //  Station radius in pixels
 const rr = -0.01; // rotation rate in radians per frame
@@ -20,6 +20,7 @@ function setup(){
 		new Platform(r, 0, TWO_PI)
 	];
 	ball = new Player(1, 40, color(50, 150, 250));
+	goal = new Goal(true, true, 150);
 	for(let i = 0; i < 30; i ++){
 		fix[i] = new Player(0, 20, color(255, 0, 0), i*PI/6);
 	}
@@ -33,6 +34,41 @@ function keyReleased(){
 	keys[keyCode] = false;
 }
 
+class Goal{
+	constructor(active, assembled, r){
+		this.active = active;
+		this.assembled = assembled;
+		this.r=r;
+		this.t = 0;
+		this.particles_r = [];
+		this.particles_a = [];
+		for(let i = 0; i<300; i++){
+			this.particles_r.push(Math.random());
+			this.particles_a.push(Math.random()*TWO_PI);
+		}
+	}
+
+	draw(){
+		noFill();
+		stroke(color(0,0,0));
+		if(this.assembled) {
+			strokeWeight(5);
+			ellipse(0,0,this.r*2+5,this.r*2+5);
+			if(this.active) {
+				stroke(color(0,0,255));
+				fill(color(0,155,255))
+				ellipse(0,0,this.r*2,this.r*2);
+				for(let i = 0; i<this.particles_a.length; i++) {
+					let r = this.r-(this.r*this.particles_r[i]+frameCount*1)%this.r;
+					let a = (this.particles_a[i]+frameCount*0.05)%TWO_PI;
+					strokeWeight(r*5/this.r);
+					point(r*Math.cos(a), r*Math.sin(a));
+				}
+			}
+		}
+	}
+}
+
 class Platform{
 	constructor(radius, a, b, c=color(0,0,0), f=0.5) {
 		this.r = radius;
@@ -43,7 +79,7 @@ class Platform{
 	}
 
 	draw(){
-		noFill()
+		noFill();
 		stroke(this.c);
 		strokeWeight(2);
 		arc(0,0,this.r*2,this.r*2,this.a+rotation(),this.b+rotation());
@@ -149,11 +185,12 @@ function draw(){
 	translate(dim/2,dim/2);
 	// rotate(-ball.p.heading()+HALF_PI);
 	// scale(0.5,0.5);
-	translate(-ball.p.x,-ball.p.y);
+	// translate(-ball.p.x,-ball.p.y);
 	// noFill();
 	// stroke(0);
 	// strokeWeight(1);
 	// ellipse(0, 0, r*2, r*2);
+	goal.draw();
 	ball.draw();
 	for(let i = 0; i < 30; i ++){fix[i].draw();}
 	for(let i=0; i<platforms.length; i++){platforms[i].draw();}
