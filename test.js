@@ -1,27 +1,38 @@
 let keys, ball, fix, platforms, features, goal;
 let tCollected = 0;
-let tGoal = 1;
+let tGoal;
 let rot, drot;
 let dim = 800;
 let file;
 let r, rr, MAX_SPEED, JUMP;
-const FRICTION = 0.5;
+let kx, ky;
+
+let stars;
+
+let lnum = 0;
+const levels = ["Intro"];
 
 function preload(){
 	file = loadLevel("Intro");
 }
 
 function setup(){
-	readLevel(file);
 	createCanvas(dim, dim);
 	smooth();
+	platforms = [];
 	keys = [];
 	fix = [];
-	goal = new Goal(false, true, 150);
-	features = [goal, new Key(300, PI, 50)];
+	goal = new Goal(false, true, 40);
+	features = [goal];
+	readLevel(file);
 	ball = new Player(40, color(50, 150, 250));
 	for(let i = 0; i < 30; i ++){
 		fix[i] = new Marker(20, color(255, 0, 0), i*PI/6);
+	}
+	stars = [];
+	let nstars = dim*dim/400;
+	for(let i = 0; i < nstars; i ++){
+		stars.push([(Math.random()-0.5)*dim*sqrt(2), (Math.random()-0.5)*dim*sqrt(2), Math.random()*3+1]);
 	}
 	rot = ball.p.heading();
 	drot = 0;
@@ -35,6 +46,15 @@ function keyReleased(){
 	keys[keyCode] = false;
 }
 
+// is angle a between b->c
+function angleCheck(a, b, c){
+  if(b+TWO_PI == c) return true;
+  a = (a%TWO_PI+TWO_PI)%TWO_PI
+  b = (b%TWO_PI+TWO_PI)%TWO_PI
+  c = (c%TWO_PI+TWO_PI)%TWO_PI
+  return (b <= c ? b <= a && a <= c : b <= a || a <= c);
+}
+
 class Platform{
 	constructor(radius, a, b, c=color(0,0,0), f=0.5) {
 		this.r = radius;
@@ -42,6 +62,10 @@ class Platform{
 		this.b = b;
 		this.c = c;
 		this.friction=f;
+	}
+
+	checkCollision(r, a, nr, s){
+		return (angleCheck(a, this.a, this.b) && this.r >= r+s/2 && this.r <= nr+s/2);
 	}
 
 	draw(){
@@ -104,14 +128,9 @@ class Goal extends StaticFeature{
 		fill(color(50));
 		stroke(color(0,0,0));
 		if(this.assembled) {
-			strokeWeight(10);
-			ellipse(this.p.x,this.p.y,this.s*2+20,this.s*2+20);
+			strokeWeight(5);
+			ellipse(this.p.x,this.p.y,this.s*2+10,this.s*2+10);
 			if(this.active) {
-				// strokeWeight(1);
-				// noFill();
-				// stroke(color(0,155,255));
-				// ellipse(0,0,this.r*2+20,this.r*2+20);
-				strokeWeight(10);
 				stroke(color(0,0,255));
 				fill(color(0,155,255))
 				ellipse(this.p.x,this.p.y,this.s*2,this.s*2);
@@ -119,7 +138,7 @@ class Goal extends StaticFeature{
 				for(let i = 0; i<this.particles_a.length; i++) {
 					let r = this.s-(this.s*this.particles_r[i]+frameCount*1)%this.s;
 					let a = (this.particles_a[i]+frameCount*0.03)%TWO_PI;
-					strokeWeight(5*sqrt(r/this.s));
+					strokeWeight(2*sqrt(r/this.s));
 					point(r*Math.cos(a), r*Math.sin(a));
 				}
 			}
@@ -127,9 +146,9 @@ class Goal extends StaticFeature{
 	}
 }
 
-class Key extends StaticFeature {
-	constructor(radius,a,s){
-		super(radius,a,s);
+class Key extends StaticFeature{
+	constructor(radius, a){
+		super(radius, a, 60);
 		this.collected = false;
 	}
 
@@ -150,35 +169,18 @@ class Key extends StaticFeature {
 	}
 
 	draw(){
-		if(this.collected){
-			noFill();
-			stroke(color(0,0,255));
-			strokeWeight(3);
+		let x = this.p.x, y = this.p.y;
+		noFill();
+		strokeWeight(6);
+		if(!this.collected){
+			stroke(250, 220, 50);
+		}else{
+			stroke(200);
 		}
-		else{
-			noStroke();
-			fill(color(100,255,255));
-		}
-		ellipse(this.p.x,this.p.y,this.s*2,this.s*2);
+		ellipse(x-15,y+15,24,24);
+		line(x-6,y+6,x+15,y-15);
+		line(x+15,y-15,x+22,y-8);
 	}
-}
-
-// is angle a between b->c
-function angleCheck(a, b, c){
-  if(b+TWO_PI == c) return true;
-  a = (a%TWO_PI+TWO_PI)%TWO_PI;
-  b = (b%TWO_PI+TWO_PI)%TWO_PI;
-  c = (c%TWO_PI+TWO_PI)%TWO_PI;
-  return (b <= c ? b <= a && a <= c : b <= a || a <= c);
-}
-
-function collide(r, a, yv, s) {
-	for(let i = 0; i<platforms.length; i++){
-		if(angleCheck(a, platforms[i].a, platforms[i].b) && platforms[i].r>=r+s/2 && platforms[i].r<=r+s/2+yv) {
-			return i;
-		}
-	}
-	return -1;
 }
 
 function rotation() {
@@ -205,7 +207,13 @@ class Entity{
 		let yv = this.v.dot(this.p)/this.p.mag();
 		if(this.l == -1){
 			this.p.add(this.v);
-			let collision = collide(current_r, current_a, yv, this.s);
+			let collision = -1;
+			for(let i = 0; i < platforms.length; i ++){
+				if(platforms[i].checkCollision(current_r, current_a, this.p.mag(), this.s)){
+					collision = i;
+					break;
+				}
+			}
 			if(collision != -1){
 				this.onCollide(collision);
 			}
@@ -311,7 +319,7 @@ class Marker extends SolidEntity{
 }
 
 function loadLevel(filename){
-	return loadStrings('https://wolfy26.github.io/coriolis-game/levels/' + filename + '.txt');
+	return loadStrings('./levels/' + filename + '.txt');
 }
 
 function readLevel(f){
@@ -320,16 +328,17 @@ function readLevel(f){
 	r = int(t[0]), rr = float(t[1]), MAX_SPEED = float(t[2]), JUMP = float(t[3]);
 	// platforms
 	n = int(f[fi++]);
-	platforms = [];
 	while(n--){
 		t = splitTokens(f[fi++]);
-		platforms.push(new Platform(int(t[0]), float(t[1]), float(t[2])));
+		platforms.push(new Platform(int(t[0]), float(t[1]), float(t[2]), color(0), float(t[3])));
 	}
 	platforms.push(new Platform(r, 0, TWO_PI));
-	// tokens
+	// keys
 	n = int(f[fi++]);
+	tGoal = n;
 	while(n--){
 		t = splitTokens(f[fi++]);
+		features.push(new Key(int(t[0]), float(t[1])))
 	}
 	// spikes
 	n = int(f[fi++]);
@@ -342,31 +351,71 @@ function readLevel(f){
 	while(n--){
 		t = splitTokens(f[fi++]);
 	}
+	// level display
+	kx = levels[lnum].length*24+65;
+	ky = 45;
+}
+
+function display(){
+	noStroke();
+	ellipse(0, 0, r*2, r*2);
+	goal.draw();
+	ball.draw();
+	for(let i = 0; i < 30; i ++){fix[i].draw();}
+	for(let i = 0; i < platforms.length; i++){platforms[i].draw();}
+	for(let i = 0; i < features.length; i ++){features[i].draw();}
 }
 
 function updateLevel(){
-  	ball.update();
-  	for(let i = 0; i < 30; i ++){fix[i].update();}
-	for(let i=0; i<features.length; i++){features[i].update();}
+	ball.update();
+	for(let i = 0; i < 30; i ++){fix[i].update();}
+	for(let i = 0; i < features.length; i++){features[i].update();}
 }
 
 function drawLevel(){
-	translate(dim/2,dim/2);
-	// rotate(-ball.p.heading()+HALF_PI);
-	// scale(0.5,0.5);
-	// translate(-ball.p.x,-ball.p.y);
-	// noFill();
-	// stroke(0);
-	// strokeWeight(1);
-	// ellipse(0, 0, r*2, r*2);
+	background(0);
+	updateLevel();
+	// stars
+	push();
+	translate(dim/2, dim/2);
 	rotate(-rot+HALF_PI);
-	scale(0.3,0.3);
-	// translate(-ball.p.x,-ball.p.y);
-	ball.draw();
-	for(let i = 0; i < 30; i ++){fix[i].draw();}
-	for(let i=0; i<platforms.length; i++){platforms[i].draw();}
-	for(let i=0; i<features.length; i++){features[i].draw();}
-  	// smooth rotation
+	noStroke();
+	fill(255, 255, 220);
+	for(let i = 0; i < stars.length; i ++){
+		ellipse(stars[i][0], stars[i][1], stars[i][2], stars[i][2]);
+	}
+	pop();
+	// level
+	push();
+	translate(dim/2,dim/2);
+	rotate(-rot+HALF_PI);
+	translate(-ball.p.x,-ball.p.y);
+	fill(250);
+  display();
+	pop();
+	// minimap
+	push();
+	noStroke();
+	translate(dim-dim/8-10, dim-dim/8-10);
+	rotate(-rot+HALF_PI);
+	scale(0.1,0.1);
+	fill(255,200);
+  display();
+	pop();
+	// level info
+	noStroke();
+	fill(0);
+	textAlign(LEFT, CENTER);
+	textFont('Courier New', 40);
+	text(levels[lnum], 30, 50);
+	text('0/' + (tGoal), kx+25, 50);
+	stroke(250, 220, 50);
+	strokeWeight(4);
+	noFill();
+	ellipse(kx-10, ky+10, 16, 16);
+	line(kx-4, ky+4, kx+10, ky-10);
+	line(kx+10, ky-10, kx+15, ky-5);
+  // smooth rotation
 	rot = (rot+TWO_PI)%TWO_PI;
 	let targ = (ball.p.heading()+TWO_PI)%TWO_PI;
 	let mv = targ-TWO_PI;
@@ -384,7 +433,7 @@ function drawLevel(){
 }
 
 function draw(){
-	background(250);
-	updateLevel();
+	background(0);
 	drawLevel();
+  // console.log(mv, drot);
 }
