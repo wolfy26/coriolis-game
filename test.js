@@ -1,14 +1,16 @@
 let keys, ball, fix, platforms;
 let rot, drot;
 let dim = 800;
+let file;
 let r, rr, MAX_SPEED, JUMP;
 const FRICTION = 0.5;
 
 function preload(){
-	loadLevel("Intro");
+	file = loadLevel("Intro");
 }
 
 function setup(){
+	readLevel(file);
 	createCanvas(dim, dim);
 	smooth();
 	keys = [];
@@ -145,7 +147,10 @@ class Player{
 }
 
 function loadLevel(filename){
-	let f = loadStrings('./levels/' + filename + '.txt');
+	return loadStrings('./levels/' + filename + '.txt');
+}
+
+function readLevel(f){
 	let fi = 0, n;
 	let t = splitTokens(f[fi++]);
 	r = int(t[0]), rr = float(t[1]), MAX_SPEED = float(t[2]), JUMP = float(t[3]);
