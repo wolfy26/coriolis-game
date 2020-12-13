@@ -4,19 +4,25 @@ const r = 500; //  Station radius in pixels
 const rr = -0.01; // rotation rate in radians per frame
 const MAX_SPEED = 10;
 const FRICTION = 0.5;
-const JUMP = 20;
+const JUMP = 6;
 
 function setup(){
 	createCanvas(dim, dim);
 	smooth();
 	keys = [];
 	fix = [];
+	platforms = [
+		new Platform(r-150, -0.5, 0.5),
+		new Platform(r-100, HALF_PI-0.2, HALF_PI+0.2),
+		new Platform(r-50, HALF_PI+0.1, QUARTER_PI+HALF_PI+0.1),
+		new Platform(r-50, QUARTER_PI, HALF_PI),
+		new Platform(r, 0, TWO_PI)
+	];
 	ball = new Player(1, 40, color(50, 150, 250));
 	for(let i = 0; i < 30; i ++){
 		fix[i] = new Player(0, 20, color(255, 0, 0), i*PI/6);
 	}
-	platforms = [new Platform(r-100, HALF_PI-0.2, HALF_PI+0.2), new Platform(r-50, HALF_PI+0.1, QUARTER_PI+HALF_PI+0.1), new Platform(r-50, QUARTER_PI, HALF_PI), new Platform(r, 0, TWO_PI)]
-}
+	}
 
 function keyPressed(){
 	keys[keyCode] = true;
@@ -43,7 +49,7 @@ class Platform{
 
 function collide(r, a, yv, s) {
 	for(let i = 0; i<platforms.length; i++){
-		if(platforms[i].a<a && platforms[i].b>a && platforms[i].r>=r+s/2 && platforms[i].r<=r+s/2+yv) {
+		if(platforms[i].a<a && (platforms[i].b>a || (platforms[i].a < 0 && platforms[i].a+TWO_PI<a)) && platforms[i].r>=r+s/2 && platforms[i].r<=r+s/2+yv) {
 			return i;
 		}
 	}
@@ -64,7 +70,7 @@ class Player{
 		this.p.rotate(angle);
 		this.v.rotate(angle);
 		this.vt = rr*this.p.mag(); // Velocity tangential, used when landed
-		this.l = 3;
+		this.l = platforms.length-1;
 	}
 
 	move(){
@@ -117,7 +123,7 @@ class Player{
 		}
 		if(this.l != -1){
 			// have we walked off a platform
-			if(current_a > platforms[this.l].b ||current_a < platforms[this.l].a){
+			if((current_a > platforms[this.l].b && (platforms[this.l].a >=0 || platforms[this.l].a+TWO_PI>current_a)) ||current_a < platforms[this.l].a){
 				this.l = -1;
 				console.log(current_a);
 				// this.v.add(p5.Vector.mult(this.p, -1*JUMP/this.p.mag()));
