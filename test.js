@@ -1,6 +1,6 @@
 let page = "Home";
 
-let keys, ball, fix, platforms, features, goal;
+let keys, ball, fix, platforms, features, goal, entities;
 let clicked = false;
 let tCollected = 0;
 let tGoal;
@@ -175,8 +175,9 @@ function readLevel(f){
 	// player initialization
 	fix = [];
 	ball = new Player(40, color(50, 150, 250));
+	entities = [ball];
 	for(let i = 0; i < 12; i ++){
-		fix[i] = new Marker(20, color(255, 0, 0), i*PI/6+PI/12);
+		ball.push(new Marker(20, color(255, 0, 0), i*PI/6+PI/12));
 	}
 	rot = ball.p.heading();
 	drot = 0;
@@ -185,16 +186,13 @@ function readLevel(f){
 function display(){
 	noStroke();
 	ellipse(0, 0, r*2, r*2);
-	goal.draw();
-	ball.draw();
-	for(let i = 0; i < 12; i ++){fix[i].draw();}
+	for(let i = 0; i < entities.length; i ++){entities[i].draw();}
 	for(let i = 0; i < platforms.length; i++){platforms[i].draw();}
 	for(let i = 0; i < features.length; i ++){features[i].draw();}
 }
 
 function updateLevel(){
-	ball.update();
-	for(let i = 0; i < 12; i ++){fix[i].update();}
+	for(let i = 0; i < entities.length; i ++){entities[i].update();}
 	for(let i = 0; i < features.length; i++){features[i].update();}
 }
 
