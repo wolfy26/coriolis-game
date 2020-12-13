@@ -1,6 +1,6 @@
 let keys, ball, fix, platforms;
 const dim = 800;
-const r = 10000; //  Station radius in pixels
+const r = 500; //  Station radius in pixels
 const rr = -0.01; // rotation rate in radians per frame
 const MAX_SPEED = 10;
 const FRICTION = 0.5;
@@ -64,7 +64,7 @@ class Player{
 		this.p.rotate(angle);
 		this.v.rotate(angle);
 		this.vt = rr*this.p.mag(); // Velocity tangential, used when landed
-		this.l = 0;
+		this.l = 3;
 	}
 
 	move(){
@@ -101,7 +101,7 @@ class Player{
 			this.v.setMag(this.vt);
 		}
 		let current_r = this.p.mag();
-		let current_a = (this.p.heading() - rotation()+TWO_PI)%TWO_PI;
+		let current_a = (this.p.heading() - rotation()+2*TWO_PI)%TWO_PI;
 		let yv = this.v.dot(this.p)/this.p.mag();
 		if(this.l == -1){
 			this.p.add(this.v);
@@ -111,12 +111,15 @@ class Player{
 				console.log(collision);
 				this.l = collision;
 				this.p.setMag(platforms[collision].r-this.s/2);
+				this.v.rotate(this.p.heading()+HALF_PI-this.v.heading());
+				this.v.setMag(this.vt);
 			}
 		}
 		if(this.l != -1){
 			// have we walked off a platform
 			if(current_a > platforms[this.l].b ||current_a < platforms[this.l].a){
 				this.l = -1;
+				console.log(current_a);
 				// this.v.add(p5.Vector.mult(this.p, -1*JUMP/this.p.mag()));
 			}
 		}
@@ -135,7 +138,7 @@ function draw(){
 	ball.update();
 	for(let i = 0; i < 30; i ++){fix[i].update();}
 	translate(dim/2,dim/2);
-	rotate(-ball.p.heading()+HALF_PI);
+	// rotate(-ball.p.heading()+HALF_PI);
 	// scale(0.5,0.5);
 	translate(-ball.p.x,-ball.p.y);
 	// noFill();
