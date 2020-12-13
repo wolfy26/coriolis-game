@@ -1,4 +1,7 @@
-let keys, ball, fix, platforms, features, goal, entities;
+let page = "Home";
+
+let keys, ball, fix, platforms, features, goal;
+let clicked = false;
 let tCollected = 0;
 let tGoal;
 let rot, drot;
@@ -6,37 +9,41 @@ let dim = 800;
 let file;
 let r, rr, MAX_SPEED, JUMP;
 let kx, ky;
+let gameticks = 0;
 
 let stars;
 
-let lnum = 0;
-const levels = ["Intro"];
+let lnum = 1;
+let lvlfiles = [];
+let lvlb = [];
+const levels = ["Level 1", "Level 2"];
+
+let hbut, abut;
+let donea = 0;
 
 function preload(){
-	file = loadLevel("Intro");
+	for(let i = 0; i < levels.length; i ++){
+		lvlfiles[i] = loadLevel(levels[i]);
+	}
 }
 
 function setup(){
 	createCanvas(dim, dim);
 	smooth();
-	platforms = [];
 	keys = [];
-	fix = [];
-	goal = new Goal(false, true, 40);
-	features = [goal];
-	readLevel(file);
-	ball = new Player(40, color(50, 150, 250));
-	entities = [ball];
-	for(let i = 0; i < 30; i ++){
-		entities.push(new Marker(20, color(255, 0, 0), i*PI/6));
-	}
 	stars = [];
 	let nstars = dim*dim/400;
 	for(let i = 0; i < nstars; i ++){
 		stars.push([(Math.random()-0.5)*dim*sqrt(2), (Math.random()-0.5)*dim*sqrt(2), Math.random()*3+1]);
 	}
-	rot = ball.p.heading();
-	drot = 0;
+	for(let i = 0; i < levels.length; i += 4){
+		let w = min(4, levels.length-i);
+		for(let j = i; j < i+w; j ++){
+			lvlb[j] = new LevelButton(j, dim/2 + (j-w/2+0.5)*150, dim/2 - 50 + i*150)
+		}
+	}
+	hbut = new LevelButton(0, dim/2 - 75, dim/2 + 100, "Home", "Home");
+	rot = 0;
 }
 
 function keyPressed(){
@@ -45,6 +52,10 @@ function keyPressed(){
 
 function keyReleased(){
 	keys[keyCode] = false;
+}
+
+function mouseClicked(){
+	clicked = true;
 }
 
 // is angle a between b->c
@@ -56,24 +67,80 @@ function angleCheck(a, b, c){
   return (b <= c ? b <= a && a <= c : b <= a || a <= c);
 }
 
-
-function collide(r, a, yv, s) {
-	for(let i = 0; i<platforms.length; i++){
-		if(angleCheck(a, platforms[i].a, platforms[i].b) && platforms[i].r>=r+s/2 && platforms[i].r<=r+s/2+yv && platforms[i].solid) {
-			return i;
-		}
-	}
-}
-
 function rotation() {
-	return ((frameCount * rr)%TWO_PI+TWO_PI)%TWO_PI;
+	return ((gameticks * rr)%TWO_PI+TWO_PI)%TWO_PI;
 }
 
 function loadLevel(filename){
-	return loadStrings('https://wolfy26.github.io/coriolis-game/levels/' + filename + '.txt'); // remember to change it to dot
+	return loadStrings('./levels/' + filename + '.txt');
+}
+
+class LevelButton {
+	constructor(n, x, y, txt = "", dir = ""){
+		this.n = n;
+		this.x = x;
+		this.y = y;
+		this.txt = txt;
+		this.dir = dir;
+		this.a = 50;
+		this.s = !n; // 0 = locked, 1 = unlocked, anything else = beaten
+		if(this.txt == ""){
+			this.txt += n+1;
+		}
+	}
+
+	click(){
+		if(dist(mouseX, mouseY, this.x, this.y) <= 63 && this.s){
+			this.a = 100;
+			if(clicked){
+				if(this.dir == ""){
+					lnum = this.n;
+					readLevel(lvlfiles[lnum]);
+					page = "Game";
+					hbut.x = 100;
+					hbut.y = dim - 100;
+					tCollected = 0;
+				}else{
+					page = this.dir;
+				}
+			}
+		}else{
+			this.a = 50;
+		}
+	}
+
+	draw(){
+		this.click();
+		strokeWeight(4);
+		if(this.s == 0){
+			stroke(90);
+			fill(100, this.a);
+		}else if(this.s == 1){
+			stroke(200);
+			fill(225, this.a);
+		}else{
+			stroke(15, 150, 50);
+			fill(75, 255, 75, this.a);
+		}
+		ellipse(this.x, this.y, 125, 125);
+		if(this.s == 0){
+			fill(90);
+		}else if(this.s == 1){
+			fill(200);
+		}else{
+			fill(15, 150, 50);
+		}
+		noStroke();
+		textAlign(CENTER, CENTER);
+		textSize(50/Math.pow(this.txt.length, 1/3));
+		text(this.txt, this.x, this.y);
+	}
 }
 
 function readLevel(f){
+	platforms = [];
+	goal = new Goal(false, true, 40);
+	features = [goal];
 	let fi = 0, n;
 	let t = splitTokens(f[fi++]);
 	r = int(t[0]), rr = float(t[1]), MAX_SPEED = float(t[2]), JUMP = float(t[3]);
@@ -105,41 +172,57 @@ function readLevel(f){
 	// level display
 	kx = levels[lnum].length*24+65;
 	ky = 45;
+	// player initialization
+	fix = [];
+	ball = new Player(40, color(50, 150, 250));
+	for(let i = 0; i < 12; i ++){
+		fix[i] = new Marker(20, color(255, 0, 0), i*PI/6+PI/12);
+	}
+	rot = ball.p.heading();
+	drot = 0;
 }
 
 function display(){
 	noStroke();
 	ellipse(0, 0, r*2, r*2);
-	for(let i = 0; i < entities.length; i ++){entities[i].draw();}
+	goal.draw();
+	ball.draw();
+	for(let i = 0; i < 12; i ++){fix[i].draw();}
 	for(let i = 0; i < platforms.length; i++){platforms[i].draw();}
 	for(let i = 0; i < features.length; i ++){features[i].draw();}
 }
 
 function updateLevel(){
-	for(let i = 0; i < entities.length; i ++){entities[i].update();}
+	ball.update();
+	for(let i = 0; i < 12; i ++){fix[i].update();}
 	for(let i = 0; i < features.length; i++){features[i].update();}
 }
 
-function drawLevel(){
-	background(0);
-	updateLevel();
-	// stars
-	push();
-	translate(dim/2, dim/2);
-	rotate(-rot+HALF_PI);
+function drawHome(){
+	fill(255);
 	noStroke();
-	fill(255, 255, 220);
-	for(let i = 0; i < stars.length; i ++){
-		ellipse(stars[i][0], stars[i][1], stars[i][2], stars[i][2]);
+	textAlign(CENTER, CENTER);
+	textFont('Courier New', 60);
+	text("Coriolis", dim/2, dim/4);
+	textSize(20);
+	textAlign(LEFT, BOTTOM);
+	text("By Daniel and Daniel", 30, dim-30);
+	for(let i = 0; i < levels.length; i ++){
+		lvlb[i].draw();
 	}
-	pop();
+	// background rotation
+	rot += 0.001;
+}
+
+function drawLevel(){
+	updateLevel();
 	// level
 	push();
 	translate(dim/2,dim/2);
 	rotate(-rot+HALF_PI);
 	translate(-ball.p.x,-ball.p.y);
 	fill(250);
-	display();
+  display();
 	pop();
 	// minimap
 	push();
@@ -148,7 +231,7 @@ function drawLevel(){
 	rotate(-rot+HALF_PI);
 	scale(0.1,0.1);
 	fill(255,200);
-	display();
+  display();
 	pop();
 	// level info
 	noStroke();
@@ -163,6 +246,7 @@ function drawLevel(){
 	ellipse(kx-10, ky+10, 16, 16);
 	line(kx-4, ky+4, kx+10, ky-10);
 	line(kx+10, ky-10, kx+15, ky-5);
+	hbut.draw();
   // smooth rotation
 	rot = (rot+TWO_PI)%TWO_PI;
 	let targ = (ball.p.heading()+TWO_PI)%TWO_PI;
@@ -178,10 +262,62 @@ function drawLevel(){
 	if(drot < mv) drot = min(mv, drot+0.005);
 	if(drot > mv) drot = max(mv, drot-0.005);
 	rot += drot;
+	// check if done
+	if(goal.f){
+		abut = new LevelButton(lnum, dim/2 + 75, dim/2 + 100, "Again");
+		abut.s = 1;
+		hbut.x = dim/2 - 75;
+		hbut.y = dim/2 + 100;
+		page = "Done";
+	}
+}
+
+function drawDone(){
+	push();
+	translate(dim/2,dim/2);
+	rotate(-rot+HALF_PI);
+	translate(-ball.p.x,-ball.p.y);
+	fill(250);
+	display();
+	pop();
+	noStroke();
+	fill(0, donea);
+	rect(0, 0, dim, dim);
+	fill(255);
+	textSize(50);
+	textAlign(CENTER, CENTER);
+	text("Level complete", dim/2, dim/3);
+	hbut.draw();
+	abut.draw();
+	// update level data
+	lvlb[lnum].s = 2;
+	if(lnum+1 < levels.length){
+		lvlb[lnum+1].s |= 1;
+	}
+	// fade out
+	donea += (200-donea)/10;
 }
 
 function draw(){
 	background(0);
-	drawLevel();
-	// console.log(mv, drot);
+	// stars
+	push();
+	translate(dim/2, dim/2);
+	rotate(-rot+HALF_PI);
+	noStroke();
+	fill(255, 255, 220);
+	for(let i = 0; i < stars.length; i ++){
+		ellipse(stars[i][0], stars[i][1], stars[i][2], stars[i][2]);
+	}
+	pop();
+	if(page === "Home"){
+		drawHome();
+		gameticks = 0;
+	}else if(page === "Game"){
+		drawLevel();
+		gameticks ++;
+	}else if(page === "Done"){
+		drawDone();
+	}
+	clicked = false;
 }

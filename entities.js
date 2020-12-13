@@ -128,9 +128,7 @@ class Player extends SolidEntity{
 		ellipse(this.p.x, this.p.y, this.s, this.s);
 	}
 
-	onCollideEntity(entity){
-		console.log(entity);
-	}
+	onCollideEntity(entity){}
 
 	inflict(damage) {
 		if(damage>=10){
