@@ -1,7 +1,7 @@
 let keys, ball, fix, platforms;
 const dim = 800;
-const r = 2500; //  Station radius in pixels
-const rr = -0.02; // rotation rate in radians per frame
+const r = 10000; //  Station radius in pixels
+const rr = -0.01; // rotation rate in radians per frame
 const MAX_SPEED = 10;
 const FRICTION = 0.5;
 const JUMP = 20;
@@ -15,7 +15,7 @@ function setup(){
 	for(let i = 0; i < 30; i ++){
 		fix[i] = new Player(0, 20, color(255, 0, 0), i*PI/6);
 	}
-	platforms = [new Platform(2400, HALF_PI-0.2, HALF_PI+0.2), new Platform(2450, HALF_PI+0.1, QUARTER_PI+HALF_PI+0.1), new Platform(2450, QUARTER_PI, HALF_PI), new Platform(2500, 0, TWO_PI)]
+	platforms = [new Platform(r-100, HALF_PI-0.2, HALF_PI+0.2), new Platform(r-50, HALF_PI+0.1, QUARTER_PI+HALF_PI+0.1), new Platform(r-50, QUARTER_PI, HALF_PI), new Platform(r, 0, TWO_PI)]
 }
 
 function keyPressed(){
