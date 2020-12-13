@@ -80,6 +80,7 @@ class Platform{
 		this.b = b;
 		this.c = c;
 		this.friction=f;
+		this.solid=true;
 	}
 
 	draw(){
@@ -101,7 +102,7 @@ function angleCheck(a, b, c){
 
 function collide(r, a, yv, s) {
 	for(let i = 0; i<platforms.length; i++){
-		if(angleCheck(a, platforms[i].a, platforms[i].b) && platforms[i].r>=r+s/2 && platforms[i].r<=r+s/2+yv) {
+		if(angleCheck(a, platforms[i].a, platforms[i].b) && platforms[i].r>=r+s/2 && platforms[i].r<=r+s/2+yv && platforms[i].solid) {
 			return i;
 		}
 	}
