@@ -441,7 +441,7 @@ function drawLevel(){
 	textAlign(LEFT, CENTER);
 	textFont('Courier New', 40);
 	text(levels[lnum], 30, 50);
-	text('0/' + (tGoal), kx+25, 50);
+	text(tCollected + '/' + tGoal, kx+25, 50);
 	stroke(250, 220, 50);
 	strokeWeight(4);
 	noFill();
