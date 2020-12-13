@@ -23,7 +23,7 @@ let donea = 0;
 
 function preload(){
 	for(let i = 0; i < levels.length; i ++){
-		lvlfiles[i] = loadLevel(levels[i]);
+		lvlfiles[i] = loadLevel('./levels/'+levels[i]+'.txt');
 	}
 }
 
