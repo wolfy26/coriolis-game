@@ -145,7 +145,7 @@ class Player{
 }
 
 function loadLevel(filename){
-	f = loadStrings('../levels/' + filename + '.txt');
+	f = loadStrings('./levels/' + filename + '.txt');
 	let fi = 0, n;
 	let t = splitTokens(f[fi++]);
 	r = int(t[0]), rr = float(t[1]), MAX_SPEED = float(t[2]), JUMP = float(t[3]);
