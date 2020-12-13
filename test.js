@@ -1,9 +1,15 @@
-let keys, ball, fix, platforms, goal;
+let keys, ball, fix, platforms;
+let rot, drot;
 const dim = 800;
 const r = 1000; //  Station radius in pixels
-const rr = -0.01; // rotation rate in radians per frame
+const rr = -0.02; // rotation rate in radians per frame
 const MAX_SPEED = 10;
-const JUMP = 6;
+const FRICTION = 0.5;
+const JUMP = 10;
+
+function preload(){
+	loadLevel("Intro");
+}
 
 function setup(){
 	createCanvas(dim, dim);
@@ -11,12 +17,10 @@ function setup(){
 	keys = [];
 	fix = [];
 	platforms = [
-		new Platform(r-300, -HALF_PI, QUARTER_PI),
-		new Platform(r-250, -0.5, HALF_PI),
-		new Platform(r-150, -0.5, 0.5),
-		new Platform(r-100, HALF_PI-0.2, HALF_PI+0.2),
-		new Platform(r-50, HALF_PI+0.1, QUARTER_PI+HALF_PI+0.1),
-		new Platform(r-50, QUARTER_PI, HALF_PI, color(0, 255, 255), 0.05),
+		new Platform(r-800, -2.75, -1.75),
+    new Platform(r-600, -1.75, -0.75),
+		new Platform(r-400, -0.75, 0.25),
+		new Platform(r-200, 0.25, 1.25),
 		new Platform(r, 0, TWO_PI)
 	];
 	ball = new Player(1, 40, color(50, 150, 250));
@@ -24,7 +28,9 @@ function setup(){
 	for(let i = 0; i < 30; i ++){
 		fix[i] = new Player(0, 20, color(255, 0, 0), i*PI/6);
 	}
-	}
+	rot = ball.p.heading();
+	drot = 0;
+}
 
 function keyPressed(){
 	keys[keyCode] = true;
@@ -92,9 +98,18 @@ class Platform{
 	}
 }
 
+// is angle a between b->c
+function angleCheck(a, b, c){
+  if(b+TWO_PI == c) return true;
+  a = (a%TWO_PI+TWO_PI)%TWO_PI
+  b = (b%TWO_PI+TWO_PI)%TWO_PI
+  c = (c%TWO_PI+TWO_PI)%TWO_PI
+  return (b <= c ? b <= a && a <= c : b <= a || a <= c);
+}
+
 function collide(r, a, yv, s) {
 	for(let i = 0; i<platforms.length; i++){
-		if(platforms[i].a<a && (platforms[i].b>a || (platforms[i].a < 0 && platforms[i].a+TWO_PI<a)) && platforms[i].r>=r+s/2 && platforms[i].r<=r+s/2+yv) {
+		if(angleCheck(a, platforms[i].a, platforms[i].b) && platforms[i].r>=r+s/2 && platforms[i].r<=r+s/2+yv) {
 			return i;
 		}
 	}
@@ -168,7 +183,7 @@ class Player{
 		}
 		if(this.l != -1){
 			// have we walked off a platform
-			if((current_a > platforms[this.l].b && (platforms[this.l].a >=0 || platforms[this.l].a+TWO_PI>current_a)) ||current_a < platforms[this.l].a){
+			if(!angleCheck(current_a, platforms[this.l].a, platforms[this.l].b)){
 				this.l = -1;
 				console.log(current_a);
 				// this.v.add(p5.Vector.mult(this.p, -1*JUMP/this.p.mag()));
@@ -183,9 +198,12 @@ class Player{
 	}
 }
 
-function draw(){
-	background(250);
-	// spaceship
+function loadLevel(filename){
+	f = loadStrings('../levels/' + filename + '.lvl');
+}
+
+function drawLevel(){
+  // spaceship
 	ball.update();
 	for(let i = 0; i < 30; i ++){fix[i].update();}
 	translate(dim/2,dim/2);
@@ -196,8 +214,32 @@ function draw(){
 	// stroke(0);
 	// strokeWeight(1);
 	// ellipse(0, 0, r*2, r*2);
+	rotate(-rot+HALF_PI);
+	scale(0.3,0.3);
+	// translate(-ball.p.x,-ball.p.y);
 	goal.draw();
 	ball.draw();
 	for(let i = 0; i < 30; i ++){fix[i].draw();}
 	for(let i=0; i<platforms.length; i++){platforms[i].draw();}
+  // smooth rotation
+	rot = (rot+TWO_PI)%TWO_PI;
+	let targ = (ball.p.heading()+TWO_PI)%TWO_PI;
+	let mv = targ-TWO_PI;
+	for(let i = 0; i < 2; i ++){
+		if(abs(targ-rot) < abs(mv-rot)){
+			mv = targ;
+		}
+		targ += TWO_PI;
+	}
+	mv -= rot;
+	mv = constrain(mv/3, -50/r, 50/r);
+	if(drot < mv) drot = min(mv, drot+0.005);
+	if(drot > mv) drot = max(mv, drot-0.005);
+	rot += drot;
+}
+
+function draw(){
+	background(250);
+  drawLevel();
+  // console.log(mv, drot);
 }
