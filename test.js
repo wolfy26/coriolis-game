@@ -49,19 +49,25 @@ class Goal{
 	}
 
 	draw(){
-		noFill();
+		fill(color(50));
 		stroke(color(0,0,0));
 		if(this.assembled) {
-			strokeWeight(5);
-			ellipse(0,0,this.r*2+5,this.r*2+5);
+			strokeWeight(10);
+			ellipse(0,0,this.r*2+20,this.r*2+20);
 			if(this.active) {
+				// strokeWeight(1);
+				// noFill();
+				// stroke(color(0,155,255));
+				// ellipse(0,0,this.r*2+20,this.r*2+20);
+				strokeWeight(10);
 				stroke(color(0,0,255));
 				fill(color(0,155,255))
 				ellipse(0,0,this.r*2,this.r*2);
+				noFill();
 				for(let i = 0; i<this.particles_a.length; i++) {
 					let r = this.r-(this.r*this.particles_r[i]+frameCount*1)%this.r;
-					let a = (this.particles_a[i]+frameCount*0.05)%TWO_PI;
-					strokeWeight(r*5/this.r);
+					let a = (this.particles_a[i]+frameCount*0.03)%TWO_PI;
+					strokeWeight(5*sqrt(r/this.r));
 					point(r*Math.cos(a), r*Math.sin(a));
 				}
 			}
