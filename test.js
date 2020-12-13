@@ -96,6 +96,7 @@ class LevelButton {
 			this.a = 100;
 			if(clicked){
 				if(this.dir == ""){
+					gameticks = 0;
 					lnum = this.n;
 					readLevel(lvlfiles[lnum]);
 					tpage = "Game";
@@ -312,7 +313,6 @@ function draw(){
 	pop();
 	if(page === "Home"){
 		drawHome();
-		gameticks = 0;
 	}
 	if(page === "Game"){
 		drawLevel();
