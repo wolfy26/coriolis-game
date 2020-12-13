@@ -1,25 +1,20 @@
 let keys, ball, fix, platforms;
 let rot, drot;
-const dim = 800;
-const r = 1000; //  Station radius in pixels
-const rr = -0.01; // rotation rate in radians per frame
-const MAX_SPEED = 10;
+let dim = 800;
+let file;
+let r, rr, MAX_SPEED, JUMP;
 const FRICTION = 0.5;
-const JUMP = 10;
+
+function preload(){
+	file = loadLevel("Intro");
+}
 
 function setup(){
+	readLevel(file);
 	createCanvas(dim, dim);
 	smooth();
 	keys = [];
 	fix = [];
-	platforms = [
-    new Platform(r-800, 0.75, 2),
-		new Platform(r-500, -0.5, 0.5),
-		new Platform(r-300, HALF_PI-0.2, HALF_PI+0.2),
-		new Platform(r-100, HALF_PI+0.1, QUARTER_PI+HALF_PI+0.1),
-		new Platform(r-100, QUARTER_PI, HALF_PI),
-		new Platform(r, 0, TWO_PI)
-	];
 	ball = new Player(1, 40, color(50, 150, 250));
 	for(let i = 0; i < 30; i ++){
 		fix[i] = new Player(0, 20, color(255, 0, 0), i*PI/6);
@@ -51,9 +46,18 @@ class Platform{
 	}
 }
 
+// is angle a between b->c
+function angleCheck(a, b, c){
+  if(b+TWO_PI == c) return true;
+  a = (a%TWO_PI+TWO_PI)%TWO_PI
+  b = (b%TWO_PI+TWO_PI)%TWO_PI
+  c = (c%TWO_PI+TWO_PI)%TWO_PI
+  return (b <= c ? b <= a && a <= c : b <= a || a <= c);
+}
+
 function collide(r, a, yv, s) {
 	for(let i = 0; i<platforms.length; i++){
-		if(platforms[i].a<a && (platforms[i].b>a || (platforms[i].a < 0 && platforms[i].a+TWO_PI<a)) && platforms[i].r>=r+s/2 && platforms[i].r<=r+s/2+yv) {
+		if(angleCheck(a, platforms[i].a, platforms[i].b) && platforms[i].r>=r+s/2 && platforms[i].r<=r+s/2+yv) {
 			return i;
 		}
 	}
@@ -127,7 +131,7 @@ class Player{
 		}
 		if(this.l != -1){
 			// have we walked off a platform
-			if((current_a > platforms[this.l].b && (platforms[this.l].a >=0 || platforms[this.l].a+TWO_PI>current_a)) ||current_a < platforms[this.l].a){
+			if(!angleCheck(current_a, platforms[this.l].a, platforms[this.l].b)){
 				this.l = -1;
 				console.log(current_a);
 				// this.v.add(p5.Vector.mult(this.p, -1*JUMP/this.p.mag()));
@@ -142,15 +146,48 @@ class Player{
 	}
 }
 
-function draw(){
-	background(250);
-	// spaceship
+function loadLevel(filename){
+	return loadStrings('./levels/' + filename + '.txt');
+}
+
+function readLevel(f){
+	let fi = 0, n;
+	let t = splitTokens(f[fi++]);
+	r = int(t[0]), rr = float(t[1]), MAX_SPEED = float(t[2]), JUMP = float(t[3]);
+	// platforms
+	n = int(f[fi++]);
+	platforms = [];
+	while(n--){
+		t = splitTokens(f[fi++]);
+		platforms.push(new Platform(int(t[0]), float(t[1]), float(t[2])));
+	}
+	platforms.push(new Platform(r, 0, TWO_PI));
+	// keys
+	n = int(f[fi++]);
+	while(n--){
+		t = splitTokens(f[fi++]);
+	}
+	// spikes
+	n = int(f[fi++]);
+	while(n--){
+		t = splitTokens(f[fi++]);
+	}
+	// enemies
+
+	n = int(f[fi++]);
+	while(n--){
+		t = splitTokens(f[fi++]);
+	}
+}
+
+function drawLevel(){
+  // spaceship
 	ball.update();
 	for(let i = 0; i < 30; i ++){fix[i].update();}
 	translate(dim/2,dim/2);
 	rotate(-rot+HALF_PI);
-	scale(0.5,0.5);
-	translate(-ball.p.x,-ball.p.y);
+	scale(0.3,0.3);
+	// translate(-ball.p.x,-ball.p.y);
 	ball.draw();
 	for(let i = 0; i < 30; i ++){fix[i].draw();}
 	for(let i=0; i<platforms.length; i++){platforms[i].draw();}
@@ -166,8 +203,13 @@ function draw(){
 	}
 	mv -= rot;
 	mv = constrain(mv/3, -50/r, 50/r);
-	if(drot < mv) drot = min(mv, drot+0.001);
-	if(drot > mv) drot = max(mv, drot-0.001);
+	if(drot < mv) drot = min(mv, drot+0.005);
+	if(drot > mv) drot = max(mv, drot-0.005);
 	rot += drot;
+}
+
+function draw(){
+	background(250);
+  drawLevel();
   // console.log(mv, drot);
 }
