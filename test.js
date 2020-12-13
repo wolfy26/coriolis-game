@@ -1,4 +1,4 @@
-let keys, ball, fix, platforms;
+let keys, ball, fix, platforms, entities;
 let rot, drot;
 let dim = 800;
 let file;
@@ -16,9 +16,10 @@ function setup(){
 	keys = [];
 	fix = [];
 	ball = new Player(40, color(50, 150, 250));
+	entities = [ball];
 	goal = new Goal(true, true, 150);
 	for(let i = 0; i < 30; i ++){
-		fix[i] = new Marker(20, color(255, 0, 0), i*PI/6);
+		entities.push(new Marker(20, color(255, 0, 0), i*PI/6));
 	}
 	rot = ball.p.heading();
 	drot = 0;
@@ -121,6 +122,7 @@ class Entity{
 		this.p.rotate(angle);
 		this.v.rotate(angle);
 		this.l = platforms.length-1;
+		this.collisions = false;
 	}
 
 	update(){
@@ -144,15 +146,26 @@ class Entity{
 				this.onFall();
 			}
 		}
+		if(this.collisions){
+			for(let i=0; i<entities.length; i++){
+				if(entities[i] != this && this.p.dist(entities[i].p)<=this.s+entities[i].s) {
+					this.onCollideEntity(entities[i]);
+				}
+			}
+		}
 	}
 
 	onPlatform() {}
 
 	onCollide(collision) {}
 
+	onCollideEntity(entity){}
+
 	onFall(){}
 
 	draw(){}
+
+	inflict(damage){}
 }
 
 class SolidEntity extends Entity{
@@ -197,6 +210,7 @@ class Player extends SolidEntity{
 	constructor(size, color, angle=0){
 		super(size, angle);
 		this.c = color;
+		this.collisions = true;
 	}
 
 	update() {
@@ -222,6 +236,16 @@ class Player extends SolidEntity{
 		fill(this.c);
 		ellipse(this.p.x, this.p.y, this.s, this.s);
 	}
+
+	onCollideEntity(entity){
+		console.log(entity);
+	}
+
+	inflict(damage) {
+		if(damage>=10){
+			console.log("YOU LOSE!");
+		}
+	}
 }
 
 class Marker extends SolidEntity{
@@ -236,6 +260,8 @@ class Marker extends SolidEntity{
 		ellipse(this.p.x, this.p.y, this.s, this.s);
 	}
 }
+
+
 
 function loadLevel(filename){
 	return loadStrings('https://wolfy26.github.io/coriolis-game/levels/' + filename + '.txt');
@@ -272,9 +298,7 @@ function readLevel(f){
 }
 
 function drawLevel(){
-  // spaceship
-	ball.update();
-	for(let i = 0; i < 30; i ++){fix[i].update();}
+	for(let i = 0; i < entities.length; i ++){entities[i].update();}
 	translate(dim/2,dim/2);
 	// rotate(-ball.p.heading()+HALF_PI);
 	// scale(0.5,0.5);
@@ -287,8 +311,7 @@ function drawLevel(){
 	scale(0.3,0.3);
 	// translate(-ball.p.x,-ball.p.y);
 	goal.draw();
-	ball.draw();
-	for(let i = 0; i < 30; i ++){fix[i].draw();}
+	for(let i = 0; i < entities.length; i ++){entities[i].draw();}
 	for(let i=0; i<platforms.length; i++){platforms[i].draw();}
   // smooth rotation
 	rot = (rot+TWO_PI)%TWO_PI;
@@ -309,6 +332,6 @@ function drawLevel(){
 
 function draw(){
 	background(250);
-  drawLevel();
-  // console.log(mv, drot);
+ 	drawLevel();
+ 	// console.log(mv, drot);
 }
