@@ -1,6 +1,6 @@
 let page = "Home", tpage = "Home";
 
-let keys, ball, fix, platforms, features, goal, entities;
+let keys, ball, fix, platforms, features, goal, entities, particles;
 let clicked = false;
 let tCollected = 0;
 let tGoal;
@@ -16,7 +16,7 @@ let stars;
 let lnum = 1;
 let lvlfiles = [];
 let lvlb = [];
-const levels = ["Level 1", "Level 2", "Level 3"];
+const levels = ["Level 1", "Level 2", "Level 3", "Level 4"];
 
 let hbut, abut, ibut;
 let donea = 0;
@@ -33,6 +33,7 @@ function setup(){
 	createCanvas(dim, dim);
 	smooth();
 	keys = [];
+	particles = [];
 	stars = [];
 	let nstars = dim*dim/400;
 	for(let i = 0; i < nstars; i ++){
@@ -75,7 +76,8 @@ function rotation() {
 }
 
 function loadLevel(filename){
-	return loadStrings('./levels/' + filename + '.txt');
+	return loadStrings('https://wolfy26.github.io/coriolis-game/levels/' + filename + '.txt');
+	// return ["800 0.01 10 10", "4", "300 0 1.57 0.5", "300 3.14 4.71 0.5", "600 0 1.57 0.5", "600 3.14 4.71 0.5", "2", "200 -0.2", "250 2", "0", "2", "0 290 6", "0 290 2.5"];
 }
 
 class LevelButton {
@@ -143,7 +145,7 @@ class LevelButton {
 
 function readLevel(f){
 	platforms = [];
-	goal = new Goal(false, true, 40);
+	goal = new Goal(false, true, 60);
 	features = [goal];
 	let fi = 0, n;
 	let t = splitTokens(f[fi++]);
@@ -167,21 +169,26 @@ function readLevel(f){
 	while(n--){
 		t = splitTokens(f[fi++]);
 	}
-	// enemies
-
+	ball = new Player(40, color(50, 150, 250), r, 0, platforms.length-1);
+	entities = [ball];
 	n = int(f[fi++]);
 	while(n--){
 		t = splitTokens(f[fi++]);
+		console.log(t[0]);
+		switch(int(t[0])){
+			case 0:
+				// Goomba
+				entities.push(new Goomba(float(t[1]), float(t[2])));
+				console.log(entities);
+		}
 	}
 	// level display
 	kx = levels[lnum].length*24+65;
 	ky = 45;
 	// player initialization
 	fix = [];
-	ball = new Player(40, color(50, 150, 250));
-	entities = [ball];
 	for(let i = 0; i < 12; i ++){
-		entities.push(new Marker(20, color(255, 0, 0), i*PI/6+PI/12));
+		entities.push(new Marker(20, color(255, 0, 0), r, i*PI/6+PI/12, platforms.length-1));
 	}
 	drot = 0;
 }
@@ -189,14 +196,27 @@ function readLevel(f){
 function display(){
 	noStroke();
 	ellipse(0, 0, r*2, r*2);
-	for(let i = 0; i < entities.length; i ++){entities[i].draw();}
 	for(let i = 0; i < platforms.length; i++){platforms[i].draw();}
+	for(let i = 0; i < particles.length; i ++){particles[i].drawParticle();}
 	for(let i = 0; i < features.length; i ++){features[i].draw();}
+	for(let i = 0; i < entities.length; i ++){
+		if(!entities[i].dead){
+			entities[i].draw();
+		}
+	}
 }
 
 function updateLevel(){
-	for(let i = 0; i < entities.length; i ++){entities[i].update();}
+	for(let i = 0; i < entities.length; i ++){
+		if(!entities[i].dead){
+			entities[i].update();
+		}
+	}
 	for(let i = 0; i < features.length; i++){features[i].update();}
+	if(frameCount%10 === 0){
+		particles = particles.filter(x => (x.end >= gameticks));
+		entities = entities.filter(x => !x.dead);
+	}
 }
 
 function drawHome(){
@@ -273,6 +293,15 @@ function drawLevel(){
 		donea = 0;
 		page = tpage = "Done";
 	}
+	// check if dead
+	if(ball.dead){
+		abut = new LevelButton(lnum, dim/2 + 75, dim/2 + 100, "Again");
+		abut.s = 1;
+		hbut.x = dim/2 - 75;
+		hbut.y = dim/2 + 100;
+		donea = 0;
+		page = tpage = "Lose";
+	}
 }
 
 function drawDone(){
@@ -297,6 +326,27 @@ function drawDone(){
 	if(lnum+1 < levels.length){
 		lvlb[lnum+1].s |= 1;
 	}
+	// fade out
+	donea += (200-donea)/10;
+}
+
+function drawFail(){
+	push();
+	translate(dim/2,dim/2);
+	rotate(-rot+HALF_PI);
+	translate(-ball.p.x,-ball.p.y);
+	fill(250);
+	display();
+	pop();
+	noStroke();
+	fill(0, donea);
+	rect(0, 0, dim, dim);
+	fill(255);
+	textSize(50);
+	textAlign(CENTER, CENTER);
+	text("You fail", dim/2, dim/3);
+	hbut.draw();
+	abut.draw();
 	// fade out
 	donea += (200-donea)/10;
 }
@@ -338,6 +388,9 @@ function draw(){
 	}
 	if(page === "Done"){
 		drawDone();
+	}
+	if(page === "Lose"){
+		drawFail();
 	}
 	if(page === "About"){
 		drawAbout();
