@@ -22,7 +22,7 @@ function setup(){
 	platforms = [];
 	keys = [];
 	particles = [];
-	goal = new Goal(false, true, 40);
+	goal = new Goal(false, true, 50);
 	features = [goal];
 	readLevel(file);
 	ball = new Player(40, color(50, 150, 250), r, 0, platforms.length-1);
