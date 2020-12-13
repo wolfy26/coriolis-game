@@ -266,6 +266,7 @@ function drawLevel(){
 		abut.s = 1;
 		hbut.x = dim/2 - 75;
 		hbut.y = dim/2 + 100;
+		donea = 0;
 		page = "Done";
 	}
 }
