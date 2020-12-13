@@ -1,9 +1,8 @@
 let keys, ball, fix, platforms;
 const dim = 800;
-const r = 500; //  Station radius in pixels
+const r = 1000; //  Station radius in pixels
 const rr = -0.01; // rotation rate in radians per frame
 const MAX_SPEED = 10;
-const FRICTION = 0.5;
 const JUMP = 6;
 
 function setup(){
@@ -12,10 +11,12 @@ function setup(){
 	keys = [];
 	fix = [];
 	platforms = [
+		new Platform(r-300, -HALF_PI, QUARTER_PI),
+		new Platform(r-250, -0.5, HALF_PI),
 		new Platform(r-150, -0.5, 0.5),
 		new Platform(r-100, HALF_PI-0.2, HALF_PI+0.2),
 		new Platform(r-50, HALF_PI+0.1, QUARTER_PI+HALF_PI+0.1),
-		new Platform(r-50, QUARTER_PI, HALF_PI),
+		new Platform(r-50, QUARTER_PI, HALF_PI, color(0, 255, 255), 0.05),
 		new Platform(r, 0, TWO_PI)
 	];
 	ball = new Player(1, 40, color(50, 150, 250));
@@ -33,16 +34,18 @@ function keyReleased(){
 }
 
 class Platform{
-	constructor(radius, a, b) {
+	constructor(radius, a, b, c=color(0,0,0), f=0.5) {
 		this.r = radius;
 		this.a = a;
 		this.b = b;
+		this.c = c;
+		this.friction=f;
 	}
 
 	draw(){
 		noFill()
-		stroke(0);
-		strokeWeight(1);
+		stroke(this.c);
+		strokeWeight(2);
 		arc(0,0,this.r*2,this.r*2,this.a+rotation(),this.b+rotation());
 	}
 }
@@ -74,33 +77,33 @@ class Player{
 	}
 
 	move(){
+		var platform = platforms[this.l];
 		var rv = rr*this.p.mag(); // the speed of the ground
-		if(this.l != -1){
-			if(keys[UP_ARROW]){
-				this.v.add(p5.Vector.mult(this.p, -1*JUMP/this.p.mag()));
-				this.l = -1;
-			}
-			if(keys[RIGHT_ARROW] && this.vt > rv-MAX_SPEED){
-				this.vt = max(rv-MAX_SPEED, this.vt-FRICTION*2);
-			}
-			if(keys[LEFT_ARROW] && this.vt < rv+MAX_SPEED){
-				this.vt = min(rv+MAX_SPEED, this.vt+FRICTION*2);
-			}
+		if(keys[RIGHT_ARROW] && this.vt > rv-MAX_SPEED){
+			this.vt = max(rv-MAX_SPEED, this.vt-platform.friction*2);
+		}
+		if(keys[LEFT_ARROW] && this.vt < rv+MAX_SPEED){
+			this.vt = min(rv+MAX_SPEED, this.vt+platform.friction*2);
+		}
+		if(keys[UP_ARROW]){
+			this.v.add(p5.Vector.mult(this.p, -1*JUMP/this.p.mag()));
+			this.l = -1;
 		}
 	}
 
 	update(){
-		if(this.u){
+		if(this.u && this.l != -1){
 			this.move();
 		}
 		var rv = rr*(this.p.mag()); // the speed of the ground
 		if(this.l != -1){
+			var platform = platforms[this.l];
 			// friction: tries to match ground velocity
 			if(this.vt < rv){
-				this.vt = min(rv, this.vt+FRICTION);
+				this.vt = min(rv, this.vt+platform.friction);
 			}
 			if(this.vt > rv){
-				this.vt = max(rv, this.vt-FRICTION);
+				this.vt = max(rv, this.vt-platform.friction);
 			}
 			this.p.rotate(this.vt/this.p.mag())
 			this.v.rotate(this.p.heading()+HALF_PI-this.v.heading());
@@ -114,7 +117,7 @@ class Player{
 			let collision = collide(current_r, current_a, yv, this.s);
 			if(collision != -1){
 				// don't leave the spaceship!
-				console.log(collision);
+				console.log(platforms[collision].friction);
 				this.l = collision;
 				this.p.setMag(platforms[collision].r-this.s/2);
 				this.v.rotate(this.p.heading()+HALF_PI-this.v.heading());
