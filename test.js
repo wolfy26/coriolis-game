@@ -15,10 +15,10 @@ function setup(){
 	smooth();
 	keys = [];
 	fix = [];
-	ball = new Player(1, 40, color(50, 150, 250));
+	ball = new Player(40, color(50, 150, 250));
 	goal = new Goal(true, true, 150);
 	for(let i = 0; i < 30; i ++){
-		fix[i] = new Player(0, 20, color(255, 0, 0), i*PI/6);
+		fix[i] = new Marker(20, color(255, 0, 0), i*PI/6);
 	}
 	rot = ball.p.heading();
 	drot = 0;
@@ -112,51 +112,20 @@ function rotation() {
 	return ((frameCount * rr)%TWO_PI+TWO_PI)%TWO_PI;
 }
 
-class Player{
-	constructor(user, size, color, angle=0){
-		this.u = user;
-		this.c = color;
+class Entity{
+	constructor(size, angle=0){
 		this.s = size;
 		this.p = createVector(0, r-this.s/2);
 		this.v = createVector(rr, 0);
 		this.p.rotate(angle);
 		this.v.rotate(angle);
-		this.vt = rr*this.p.mag(); // Velocity tangential, used when landed
 		this.l = platforms.length-1;
 	}
 
-	move(){
-		var platform = platforms[this.l];
-		var rv = rr*this.p.mag(); // the speed of the ground
-		if(keys[RIGHT_ARROW] && this.vt > rv-MAX_SPEED){
-			this.vt = max(rv-MAX_SPEED, this.vt-platform.friction*2);
-		}
-		if(keys[LEFT_ARROW] && this.vt < rv+MAX_SPEED){
-			this.vt = min(rv+MAX_SPEED, this.vt+platform.friction*2);
-		}
-		if(keys[UP_ARROW]){
-			this.v.add(p5.Vector.mult(this.p, -1*JUMP/this.p.mag()));
-			this.l = -1;
-		}
-	}
-
 	update(){
-		if(this.u && this.l != -1){
-			this.move();
-		}
 		var rv = rr*(this.p.mag()); // the speed of the ground
 		if(this.l != -1){
-			var platform = platforms[this.l];
-			// friction: tries to match ground velocity
-			if(this.vt < rv){
-				this.vt = min(rv, this.vt+platform.friction);
-			}
-			if(this.vt > rv){
-				this.vt = max(rv, this.vt-platform.friction);
-			}
-			this.p.rotate(this.vt/this.p.mag())
-			this.v.rotate(this.p.heading()+HALF_PI-this.v.heading());
-			this.v.setMag(this.vt);
+			this.onPlatform();
 		}
 		let current_r = this.p.mag();
 		let current_a = (this.p.heading() - rotation()+2*TWO_PI)%TWO_PI;
@@ -165,22 +134,98 @@ class Player{
 			this.p.add(this.v);
 			let collision = collide(current_r, current_a, yv, this.s);
 			if(collision != -1){
-				// don't leave the spaceship!
-				console.log(platforms[collision].friction);
-				this.l = collision;
-				this.p.setMag(platforms[collision].r-this.s/2);
-				this.v.rotate(this.p.heading()+HALF_PI-this.v.heading());
-				this.v.setMag(this.vt);
+				this.onCollide(collision);
 			}
 		}
 		if(this.l != -1){
 			// have we walked off a platform
 			if(!angleCheck(current_a, platforms[this.l].a, platforms[this.l].b)){
-				this.l = -1;
-				console.log(current_a);
-				// this.v.add(p5.Vector.mult(this.p, -1*JUMP/this.p.mag()));
+				this.onFall();
 			}
 		}
+	}
+
+	onPlatform() {}
+
+	onCollide(collision) {}
+
+	onFall(){}
+
+	draw(){}
+}
+
+class SolidEntity extends Entity{
+	constructor(size, angle=0){
+		super(size, angle);
+		this.vt = rr*this.p.mag(); // Velocity tangential, used when landed
+	}
+
+	onPlatform() {
+		var rv = rr*this.p.mag(); // the speed of the ground
+		var platform = platforms[this.l];
+		// friction: tries to match ground velocity
+		if(this.vt < rv){
+			this.vt = min(rv, this.vt+platform.friction);
+		}
+		if(this.vt > rv){
+			this.vt = max(rv, this.vt-platform.friction);
+		}
+		this.p.rotate(this.vt/this.p.mag())
+		this.v.rotate(this.p.heading()+HALF_PI-this.v.heading());
+		console.log(this.v);
+		this.v.setMag(this.vt);
+	}
+
+	onCollide(collision) {
+		// don't leave the spaceship!
+		console.log(platforms[collision].friction);
+		this.l = collision;
+		this.p.setMag(platforms[collision].r-this.s/2);
+		this.v.rotate(this.p.heading()+HALF_PI-this.v.heading());
+		this.v.setMag(this.vt);
+	}
+
+	onFall(){
+		this.l = -1;
+	}
+
+}
+
+class Player extends SolidEntity{
+	constructor(size, color, angle=0){
+		super(size, angle);
+		this.c = color;
+	}
+
+	update() {
+		if(this.l != -1) {
+			var platform = platforms[this.l];
+			var rv = rr*this.p.mag(); // the speed of the ground
+			if(keys[RIGHT_ARROW] && this.vt > rv-MAX_SPEED){
+				this.vt = max(rv-MAX_SPEED, this.vt-platform.friction*2);
+			}
+			if(keys[LEFT_ARROW] && this.vt < rv+MAX_SPEED){
+				this.vt = min(rv+MAX_SPEED, this.vt+platform.friction*2);
+			}
+			if(keys[UP_ARROW]){
+				this.v.add(p5.Vector.mult(this.p, -1*JUMP/this.p.mag()));
+				this.l = -1;
+			}
+		}
+		super.update();
+	}
+
+	draw(){
+		noStroke();
+		fill(this.c);
+		ellipse(this.p.x, this.p.y, this.s, this.s);
+	}
+}
+
+class Marker extends SolidEntity{
+	constructor(size, color, angle=0){
+		super(size, angle);
+		this.c = color;
 	}
 
 	draw(){
@@ -191,7 +236,7 @@ class Player{
 }
 
 function loadLevel(filename){
-	return loadStrings('./levels/' + filename + '.txt');
+	return loadStrings('https://wolfy26.github.io/coriolis-game/levels/' + filename + '.txt');
 }
 
 function readLevel(f){
