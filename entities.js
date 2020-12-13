@@ -143,7 +143,7 @@ class Player extends SolidEntity{
 
 	inflict(damage) {
 		if(damage>=10){
-			console.log("YOU LOSE!");
+			this.dead = true;
 		}
 	}
 }

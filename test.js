@@ -76,6 +76,7 @@ function rotation() {
 
 function loadLevel(filename){
 	return loadStrings('https://wolfy26.github.io/coriolis-game/levels/' + filename + '.txt');
+	// return ["800 0.01 10 10", "4", "300 0 1.57 0.5", "300 3.14 4.71 0.5", "600 0 1.57 0.5", "600 3.14 4.71 0.5", "2", "200 -0.2", "250 2", "0", "2", "0 290 6", "0 290 2.5"];
 }
 
 class LevelButton {
@@ -166,19 +167,24 @@ function readLevel(f){
 	while(n--){
 		t = splitTokens(f[fi++]);
 	}
-	// enemies
-
+	ball = new Player(40, color(50, 150, 250), r, 0, platforms.length-1);
+	entities = [ball];
 	n = int(f[fi++]);
 	while(n--){
 		t = splitTokens(f[fi++]);
+		console.log(t[0]);
+		switch(int(t[0])){
+			case 0:
+				// Goomba
+				entities.push(new Goomba(float(t[1]), float(t[2])));
+				console.log(entities);
+		}
 	}
 	// level display
 	kx = levels[lnum].length*24+65;
 	ky = 45;
 	// player initialization
 	fix = [];
-	ball = new Player(40, color(50, 150, 250), r, 0, platforms.length-1);
-	entities = [ball];
 	for(let i = 0; i < 12; i ++){
 		entities.push(new Marker(20, color(255, 0, 0), r, i*PI/6+PI/12, platforms.length-1));
 	}
@@ -284,6 +290,15 @@ function drawLevel(){
 		donea = 0;
 		page = tpage = "Done";
 	}
+	// check if dead
+	if(ball.dead){
+		abut = new LevelButton(lnum, dim/2 + 75, dim/2 + 100, "Again");
+		abut.s = 1;
+		hbut.x = dim/2 - 75;
+		hbut.y = dim/2 + 100;
+		donea = 0;
+		page = tpage = "Lose";
+	}
 }
 
 function drawDone(){
@@ -312,6 +327,27 @@ function drawDone(){
 	donea += (200-donea)/10;
 }
 
+function drawFail(){
+	push();
+	translate(dim/2,dim/2);
+	rotate(-rot+HALF_PI);
+	translate(-ball.p.x,-ball.p.y);
+	fill(250);
+	display();
+	pop();
+	noStroke();
+	fill(0, donea);
+	rect(0, 0, dim, dim);
+	fill(255);
+	textSize(50);
+	textAlign(CENTER, CENTER);
+	text("You fail", dim/2, dim/3);
+	hbut.draw();
+	abut.draw();
+	// fade out
+	donea += (200-donea)/10;
+}
+
 function draw(){
 	background(0);
 	// stars
@@ -334,6 +370,9 @@ function draw(){
 	}
 	if(page === "Done"){
 		drawDone();
+	}
+	if(page === "Lose"){
+		drawFail();
 	}
 	// general scene-change animation, except for 'Done'
 	if(page != tpage){
