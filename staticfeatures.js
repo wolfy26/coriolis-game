@@ -51,11 +51,11 @@ class Goal extends StaticFeature{
 		stroke(color(0,0,0));
 		if(this.assembled) {
 			strokeWeight(5);
-			ellipse(this.p.x,this.p.y,this.s*2+10,this.s*2+10);
+			ellipse(this.p.x,this.p.y,this.s+10,this.s+10);
 			if(this.active) {
 				stroke(color(0,0,255));
 				fill(color(0,155,255))
-				ellipse(this.p.x,this.p.y,this.s*2,this.s*2);
+				ellipse(this.p.x,this.p.y,this.s,this.s);
 				noFill();
 				for(let i = 0; i<this.particles_a.length; i++) {
 					let r = this.s-(this.s*this.particles_r[i]+frameCount*1)%this.s;

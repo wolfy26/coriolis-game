@@ -1,4 +1,4 @@
-let keys, ball, fix, platforms, features, goal, entities;
+let keys, ball, platforms, features, goal, entities, particles;
 let tCollected = 0;
 let tGoal;
 let rot, drot;
@@ -21,14 +21,14 @@ function setup(){
 	smooth();
 	platforms = [];
 	keys = [];
-	fix = [];
+	particles = [];
 	goal = new Goal(false, true, 40);
 	features = [goal];
 	readLevel(file);
-	ball = new Player(40, color(50, 150, 250));
-	entities = [ball];
-	for(let i = 0; i < 30; i ++){
-		entities.push(new Marker(20, color(255, 0, 0), i*PI/6));
+	ball = new Player(40, color(50, 150, 250), r, 0, platforms.length-1);
+	entities = [ball, new Goomba(100, 2), new Goomba(800, 0)];
+	for(let i = 0; i < 12; i ++){
+		entities.push(new Marker(20, color(255, 0, 0), r, i*PI/6, platforms.length-1));
 	}
 	stars = [];
 	let nstars = dim*dim/400;
@@ -110,14 +110,27 @@ function readLevel(f){
 function display(){
 	noStroke();
 	ellipse(0, 0, r*2, r*2);
-	for(let i = 0; i < entities.length; i ++){entities[i].draw();}
 	for(let i = 0; i < platforms.length; i++){platforms[i].draw();}
+	for(let i = 0; i < particles.length; i ++){particles[i].drawParticle();}
 	for(let i = 0; i < features.length; i ++){features[i].draw();}
+	for(let i = 0; i < entities.length; i ++){
+		if(!entities[i].dead){
+			entities[i].draw();
+		}
+	}
 }
 
 function updateLevel(){
-	for(let i = 0; i < entities.length; i ++){entities[i].update();}
+	for(let i = 0; i < entities.length; i ++){
+		if(!entities[i].dead){
+			entities[i].update();
+		}
+	}
 	for(let i = 0; i < features.length; i++){features[i].update();}
+	if(frameCount%10 === 0){ //TODO: replace with gameTicks
+		particles = particles.filter(x => (x.end >= frameCount));
+		entities = entities.filter(x => !x.dead);
+	}
 }
 
 function drawLevel(){
