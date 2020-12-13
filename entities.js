@@ -8,7 +8,7 @@ class Entity{
 		this.v = createVector(-1*rr*r_pos, 0);
 		this.p.rotate(angle);
 		this.v.rotate(angle);
-		this.l = -1;
+		this.l = l;
 		this.collisions = false;
 		this.dead = false;
 	}
@@ -64,8 +64,8 @@ class Entity{
 }
 
 class SolidEntity extends Entity{
-	constructor(size, r_pos, angle=0){
-		super(size, r_pos, angle);
+	constructor(size, r_pos, angle=0, l=-1){
+		super(size, r_pos, angle, l);
 		this.vt = rr*this.p.mag(); // Velocity tangential, used when landed
 	}
 
@@ -100,8 +100,8 @@ class SolidEntity extends Entity{
 }
 
 class Player extends SolidEntity{
-	constructor(size, color, r_pos, angle){
-		super(size, r_pos, angle);
+	constructor(size, color, r_pos, angle, l=-1){
+		super(size, r_pos, angle, l);
 		this.c = color;
 		this.collisions = true;
 	}
@@ -149,8 +149,8 @@ class Player extends SolidEntity{
 }
 
 class Marker extends SolidEntity{
-	constructor(size, color, r_pos, angle=0){
-		super(size, r_pos, angle);
+	constructor(size, color, r_pos, angle=0, l=-1){
+		super(size, r_pos, angle, l);
 		this.c = color;
 	}
 

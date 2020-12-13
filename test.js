@@ -34,7 +34,6 @@ function setup(){
 	smooth();
 	keys = [];
 	particles = [];
-	readLevel(file);
 	stars = [];
 	let nstars = dim*dim/400;
 	for(let i = 0; i < nstars; i ++){
@@ -143,7 +142,7 @@ class LevelButton {
 
 function readLevel(f){
 	platforms = [];
-	goal = new Goal(false, true, 40);
+	goal = new Goal(false, true, 60);
 	features = [goal];
 	let fi = 0, n;
 	let t = splitTokens(f[fi++]);
@@ -178,10 +177,10 @@ function readLevel(f){
 	ky = 45;
 	// player initialization
 	fix = [];
-	ball = new Player(40, color(50, 150, 250));
+	ball = new Player(40, color(50, 150, 250), r, 0, platforms.length-1);
 	entities = [ball];
 	for(let i = 0; i < 12; i ++){
-		entities.push(new Marker(20, color(255, 0, 0), i*PI/6+PI/12));
+		entities.push(new Marker(20, color(255, 0, 0), r, i*PI/6+PI/12, platforms.length-1));
 	}
 	drot = 0;
 }
@@ -206,8 +205,8 @@ function updateLevel(){
 		}
 	}
 	for(let i = 0; i < features.length; i++){features[i].update();}
-	if(frameCount%10 === 0){ //TODO: replace with gameTicks
-		particles = particles.filter(x => (x.end >= frameCount));
+	if(frameCount%10 === 0){
+		particles = particles.filter(x => (x.end >= gameticks));
 		entities = entities.filter(x => !x.dead);
 	}
 }

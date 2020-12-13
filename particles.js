@@ -1,14 +1,14 @@
 class Particle {
     constructor(p, duration) {
         this.r = p.mag();
-        this.a = p.heading() - frameCount*rr;
-        this.end = frameCount + duration; //TODO: replace with gameTicks
+        this.a = p.heading() - gameticks*rr;
+        this.end = gameticks + duration;
         this.duration = duration
     }
 
     drawParticle() {
-        if(frameCount <= this.end) { //TODO: replace with gameTicks
-            let real_a = this.a + frameCount*rr;
+        if(gameticks <= this.end) {
+            let real_a = this.a + gameticks*rr;
             this.draw(this.r*Math.cos(real_a), this.r*Math.sin(real_a));
         }
     }
@@ -26,7 +26,7 @@ class CircleParticle extends Particle {
     draw(x, y) {
         noStroke();
         fill(this.color);
-        let real_s = this.s*(this.end-frameCount)/this.duration //TODO: replace with gameTicks
+        let real_s = this.s*(this.end-gameticks)/this.duration
         ellipse(x, y, real_s, real_s);
     }
 }
