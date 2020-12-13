@@ -212,7 +212,7 @@ class Goomba extends WalkingEnemy{
 		super(30, color(255, 100, 56), r_pos, angle, 1);
 		this.hp = 10;
 	}
-	
+
 	inflict(damage) {
 		this.hp -= damage;
 		if(this.hp <= 0){

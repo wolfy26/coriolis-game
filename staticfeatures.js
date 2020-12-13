@@ -25,6 +25,7 @@ class Goal extends StaticFeature{
 		super(0,0,s);
 		this.active = active;
 		this.assembled = assembled;
+		this.f = false;
 		this.t = 0;
 		this.particles_r = [];
 		this.particles_a = [];
@@ -42,7 +43,7 @@ class Goal extends StaticFeature{
 
 	collide(entity){
 		if(this.active && this.assembled) {
-			console.log("WIN!");
+			this.f = true;
 		}
 	}
 
@@ -57,12 +58,14 @@ class Goal extends StaticFeature{
 				fill(color(0,155,255))
 				ellipse(this.p.x,this.p.y,this.s,this.s);
 				noFill();
-				for(let i = 0; i<this.particles_a.length; i++) {
-                    let s = this.s/2
-					let r = s-(s*this.particles_r[i]+frameCount*1)%s;
-					let a = (this.particles_a[i]+frameCount*0.03)%TWO_PI;
-					strokeWeight(2*sqrt(r/s));
-					point(r*Math.cos(a), r*Math.sin(a));
+				if(!this.f){
+					for(let i = 0; i<this.particles_a.length; i++) {
+	                    let s = this.s/2
+						let r = s-(s*this.particles_r[i]+frameCount*1)%s;
+						let a = (this.particles_a[i]+frameCount*0.03)%TWO_PI;
+						strokeWeight(2*sqrt(r/s));
+						point(r*Math.cos(a), r*Math.sin(a));
+					}
 				}
 			}
 		}
@@ -70,7 +73,7 @@ class Goal extends StaticFeature{
 }
 
 class Key extends StaticFeature{
-	constructor(radius, a) {
+	constructor(radius, a){
 		super(radius, a, 60);
 		this.collected = false;
 	}
@@ -91,14 +94,13 @@ class Key extends StaticFeature{
 		}
 	}
 
-	draw() {
+	draw(){
 		let x = this.p.x, y = this.p.y;
 		noFill();
 		strokeWeight(6);
-		if(!this.collected) {
+		if(!this.collected){
 			stroke(250, 220, 50);
-		}
-		else {
+		}else{
 			stroke(200);
 		}
 		ellipse(x-15,y+15,24,24);
