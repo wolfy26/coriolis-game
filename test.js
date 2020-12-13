@@ -16,7 +16,7 @@ let stars;
 let lnum = 1;
 let lvlfiles = [];
 let lvlb = [];
-const levels = ["Level 1", "Level 2"];
+const levels = ["Level 1", "Level 2", "Level 3"];
 
 let hbut, abut;
 let donea = 0;
