@@ -318,7 +318,7 @@ function drawDone(){
 	fill(255);
 	textSize(50);
 	textAlign(CENTER, CENTER);
-	text("Level complete", dim/2, dim/3);
+	text("Level complete\nTime: " + (gameticks/60).toFixed(2), dim/2, dim/3);
 	hbut.draw();
 	abut.draw();
 	// update level data
