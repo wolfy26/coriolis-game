@@ -8,7 +8,7 @@ class Platform{
 	}
 
 	checkCollision(r, a, nr, s){
-		return (angleCheck(a, this.a, this.b) && this.r >= r+s/2 && this.r <= nr+s/2);
+		return (angleCheck(a, this.a, this.b) && this.r >= r+s && this.r <= nr+s);
 	}
 
 	draw(){

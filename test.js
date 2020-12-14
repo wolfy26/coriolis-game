@@ -169,7 +169,7 @@ function readLevel(f){
 	while(n--){
 		t = splitTokens(f[fi++]);
 	}
-	ball = new Player(40, color(50, 150, 250), r, 0, platforms.length-1);
+	ball = new Player(20, color(50, 150, 250), r, 0, platforms.length-1);
 	entities = [ball];
 	n = int(f[fi++]);
 	while(n--){
