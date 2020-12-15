@@ -34,10 +34,12 @@ function setup(){
 	smooth();
 	keys = [];
 	particles = [];
-	stars = [];
-	let nstars = dim*dim/400;
-	for(let i = 0; i < nstars; i ++){
-		stars.push([(Math.random()-0.5)*dim*sqrt(2), (Math.random()-0.5)*dim*sqrt(2), Math.random()*3+1]);
+	stars = [[],[],[]];
+	let nstars = dim*dim/400/3;
+	for(let s = 0; s<3; s++) {
+		for(let i = 0; i < nstars; i ++){
+			stars[s].push([(Math.random()-0.5)*dim*sqrt(2), (Math.random()-0.5)*dim*sqrt(2)]);
+		}
 	}
 	for(let i = 0; i < levels.length; i += 4){
 		let w = min(4, levels.length-i);
@@ -244,7 +246,7 @@ function drawLevel(){
 	rotate(-rot+HALF_PI);
 	translate(-ball.p.x,-ball.p.y);
 	fill(250);
-  display();
+  	display();
 	pop();
 	// minimap
 	push();
@@ -253,7 +255,7 @@ function drawLevel(){
 	rotate(-rot+HALF_PI);
 	scale(0.1,0.1);
 	fill(255,200);
-  display();
+  	display();
 	pop();
 	// level info
 	noStroke();
@@ -269,7 +271,7 @@ function drawLevel(){
 	line(kx-4, ky+4, kx+10, ky-10);
 	line(kx+10, ky-10, kx+15, ky-5);
 	hbut.draw();
-  // smooth rotation
+  	// smooth rotation
 	rot = (rot+TWO_PI)%TWO_PI;
 	let targ = (ball.p.heading()+TWO_PI)%TWO_PI;
 	let mv = targ-TWO_PI;
@@ -373,10 +375,13 @@ function draw(){
 	push();
 	translate(dim/2, dim/2);
 	rotate(-rot+HALF_PI);
-	noStroke();
+	stroke(color(255));
 	fill(255, 255, 220);
-	for(let i = 0; i < stars.length; i ++){
-		ellipse(stars[i][0], stars[i][1], stars[i][2], stars[i][2]);
+	for(let s = 0; s<stars.length; s++){
+		strokeWeight(s+1);
+		for(let i = 0; i < stars[s].length; i ++){
+			point(stars[s][i][0], stars[s][i][1]);
+		}
 	}
 	pop();
 	if(page === "Home"){
