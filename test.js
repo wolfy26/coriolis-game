@@ -262,6 +262,8 @@ function drawLevel(){
 	textFont('Courier New', 40);
 	text(levels[lnum], 30, 50);
 	text(tCollected + '/' + tGoal, kx+25, 50);
+	textFont('Courier New', 20);
+	text("Time: " + (gameticks/60).toFixed(2), 35, 80);
 	stroke(250, 220, 50);
 	strokeWeight(4);
 	noFill();
